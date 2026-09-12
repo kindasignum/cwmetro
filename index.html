@@ -50,7 +50,6 @@
       letter-spacing: -0.2px;
     }
 
-    /* ================= ПАНЕЛЬ МАРШРУТА ================= */
     .route-panel {
       position: absolute;
       background: #ffffff;
@@ -74,7 +73,6 @@
       }
     }
 
-    /* Мобильная версия: панель снизу, с тремя состояниями */
     @media (max-width: 700px) {
       .route-panel {
         left: 0;
@@ -91,7 +89,6 @@
         touch-action: auto;
       }
 
-      /* Состояния мобильной панели */
       .route-panel.mob-collapsed {
         max-height: 56px;
         overflow: hidden;
@@ -103,7 +100,6 @@
         max-height: 88vh;
       }
 
-      /* Ручка для свайпа */
       .panel-handle {
         display: block;
         position: sticky;
@@ -130,7 +126,6 @@
       }
     }
 
-    /* На ПК ручка скрыта */
     @media (min-width: 701px) {
       .panel-handle { display: none; }
     }
@@ -476,7 +471,6 @@
       color: #c0392b;
     }
 
-    /* ================= ДЕТАЛИ МАРШРУТА ================= */
     .route-details {
       margin-top: 6px;
       border-top: 1px solid #f0f0f0;
@@ -547,6 +541,7 @@
     .detail-stop.seg-orange:not(:last-child)::before { background: #e67e22; }
     .detail-stop.seg-green:not(:last-child)::before  { background: #27ae60; }
     .detail-stop.seg-blue:not(:last-child)::before   { background: #2980b9; }
+    .detail-stop.seg-pink:not(:last-child)::before   { background: #e91e8c; }
 
     .detail-dot {
       width: 22px;
@@ -755,7 +750,6 @@
       border: 1px solid rgba(0, 0, 0, 0.04);
     }
 
-    /* На мобильных легенда сдвигается вправо вверх, чтобы не пересекаться с панелью */
     @media (max-width: 700px) {
       .legend {
         bottom: auto;
@@ -782,6 +776,17 @@
       border-radius: 50%;
       flex-shrink: 0;
       box-shadow: 0 0 0 2px white;
+    }
+
+    .legend-item.temporary .legend-dot {
+      /* Пунктирный маркер временной ветки */
+      background: repeating-linear-gradient(
+        45deg,
+        #e91e8c,
+        #e91e8c 3px,
+        #ffffff 3px,
+        #ffffff 5px
+      );
     }
 
     .zoom-controls {
@@ -895,6 +900,12 @@
               id="seg-orange-derevnya-ruiny" x1="1240" y1="672" x2="1080" y2="800"
               stroke="#e67e22" stroke-width="10" stroke-linecap="round" />
 
+        <!-- РОЗОВАЯ (Деревенская) — временная, идёт параллельно синей, чуть выше -->
+        <line class="line-segment dim-target" data-line="pink" data-from="derevnya" data-to="centr_labirinta"
+              id="seg-pink-derevnya-centr_labirinta" x1="1200" y1="606" x2="1020" y2="606"
+              stroke="#e91e8c" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="14 6" />
+
         <line id="transfer-more" class="dim-target" x1="1400" y1="620" x2="1440" y2="672"
               stroke="#7f7f8a" stroke-width="3" stroke-dasharray="5 6" />
         <line id="transfer-derevnya" class="dim-target" x1="1200" y1="620" x2="1240" y2="672"
@@ -929,7 +940,7 @@
           <text x="1400" y="598" class="station-label" style="font-weight:700; font-size:13px; fill:#2980b9;">(море)</text>
         </g>
 
-        <g class="station dim-target" data-id="derevnya" data-name="Деревня" data-lines="orange,blue">
+        <g class="station dim-target" data-id="derevnya" data-name="Деревня" data-lines="orange,blue,pink">
           <circle cx="1200" cy="620" r="10" fill="#2980b9" stroke="white" stroke-width="2.5" class="station-circle" />
           <circle cx="1240" cy="672" r="10" fill="#e67e22" stroke="white" stroke-width="2.5" class="station-circle" />
           <text x="1200" y="580" class="station-label" style="font-weight:700; font-size:15px;">Деревня</text>
@@ -945,7 +956,7 @@
           <text x="780" y="380" class="station-label" style="font-weight:700; font-size:13px; fill:#27ae60;">(озеро)</text>
         </g>
 
-        <g class="station dim-target" data-id="centr_labirinta" data-name="Центр лабиринта" data-lines="green,blue">
+        <g class="station dim-target" data-id="centr_labirinta" data-name="Центр лабиринта" data-lines="green,blue,pink">
           <path d="M 1020,606 A 14,14 0 0 0 1020,634 Z"
                 fill="#27ae60" stroke="white" stroke-width="2.5" class="pill-half" stroke-linejoin="round" />
           <path d="M 1020,606 A 14,14 0 0 1 1020,634 Z"
@@ -1028,6 +1039,7 @@
     <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> Руинная</div>
     <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> Озёрная</div>
     <div class="legend-item"><span class="legend-dot" style="background:#2980b9;"></span> Морская</div>
+    <div class="legend-item temporary"><span class="legend-dot"></span> Деревенская <span style="font-size:10px;color:#e91e8c;margin-left:2px;">(врем.)</span></div>
   </div>
 
   <div class="zoom-controls">
@@ -1046,31 +1058,34 @@
       { id: 'poselok',             name: 'Посёлок',               x: 620,  y: 400, lines: ['purple'] },
       { id: 'predpustynye_ozero',  name: 'Предпустынье (озеро)',  x: 780,  y: 400, lines: ['purple', 'green'] },
       { id: 'predpustynye_more',   name: 'Предпустынье (море)',   x: 1400, y: 646, lines: ['orange', 'blue'] },
-      { id: 'derevnya',            name: 'Деревня',               x: 1200, y: 646, lines: ['orange', 'blue'] },
+      { id: 'derevnya',            name: 'Деревня',               x: 1200, y: 646, lines: ['orange', 'blue', 'pink'] },
       { id: 'ruiny',               name: 'Руины',                 x: 1080, y: 800, lines: ['orange'] },
       { id: 'oazis',               name: 'Оазис',                 x: 900,  y: 520, lines: ['green'] },
-      { id: 'centr_labirinta',     name: 'Центр лабиринта',       x: 1020, y: 620, lines: ['green', 'blue'] }
+      { id: 'centr_labirinta',     name: 'Центр лабиринта',       x: 1020, y: 620, lines: ['green', 'blue', 'pink'] }
     ];
 
     const LINE_COLORS = {
       purple: '#8e44ad',
       orange: '#e67e22',
       green:  '#27ae60',
-      blue:   '#2980b9'
+      blue:   '#2980b9',
+      pink:   '#e91e8c'
     };
 
     const LINE_NAMES = {
       purple: { accusative: 'Горную', genitive: 'Горной', nominative: 'Горная' },
       orange: { accusative: 'Руинную', genitive: 'Руинной', nominative: 'Руинная' },
       green:  { accusative: 'Озёрную', genitive: 'Озёрной', nominative: 'Озёрная' },
-      blue:   { accusative: 'Морскую', genitive: 'Морской', nominative: 'Морская' }
+      blue:   { accusative: 'Морскую', genitive: 'Морской', nominative: 'Морская' },
+      pink:   { accusative: 'Деревенскую', genitive: 'Деревенской', nominative: 'Деревенская' }
     };
 
     const lines = {
       purple: ['gorod', 'gory', 'poselok', 'predpustynye_ozero'],
       orange: ['predpustynye_more', 'derevnya', 'ruiny'],
       green:  ['predpustynye_ozero', 'oazis', 'centr_labirinta'],
-      blue:   ['centr_labirinta', 'derevnya', 'predpustynye_more']
+      blue:   ['centr_labirinta', 'derevnya', 'predpustynye_more'],
+      pink:   ['derevnya', 'centr_labirinta']
     };
 
     const graph = {};
@@ -1086,6 +1101,12 @@
     function hhmmToMinutes(hhmm) {
       const [h, m] = hhmm.split(':').map(Number);
       return h * 60 + m;
+    }
+
+    // Преобразование календарной даты в абсолютный индекс дня (дней от 1970-01-01 UTC)
+    function dateToAbsDayIndex(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
     }
 
     const DAY_NAMES_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
@@ -1167,30 +1188,68 @@
       ]}
     ];
 
-    const allTrips = [...purpleTrips, ...orangeTrips, ...greenTrips, ...blueTrips];
+    // РОЗОВАЯ (Деревенская) — временная, привязана к конкретным датам 2026 года
+    // Рейс Деревня → Центр: отправление 11, 13, 15 сентября в 21:00, прибытие на след. день в 05:00
+    // Рейс Центр → Деревня: отправление 12, 14 сентября в 21:00, прибытие на след. день в 05:00
+    const pinkTrips = [
+      { line: 'pink', absDays: ['2026-09-11', '2026-09-13', '2026-09-15'].map(dateToAbsDayIndex), stops: [
+        { station: 'derevnya', arrive: null, depart: hhmmToMinutes('21:00') },
+        { station: 'centr_labirinta', arrive: hhmmToMinutes('05:00') + 1440, depart: null }
+      ]},
+      { line: 'pink', absDays: ['2026-09-12', '2026-09-14'].map(dateToAbsDayIndex), stops: [
+        { station: 'centr_labirinta', arrive: null, depart: hhmmToMinutes('21:00') },
+        { station: 'derevnya', arrive: hhmmToMinutes('05:00') + 1440, depart: null }
+      ]}
+    ];
 
+    const allTrips = [...purpleTrips, ...orangeTrips, ...greenTrips, ...blueTrips, ...pinkTrips];
+
+    // ВАЖНО: теперь absoluteMinutes = минуты от 1970-01-01 00:00 (в московском календаре)
     function getMoscowNow() {
       const now = new Date();
       const parts = new Intl.DateTimeFormat('ru-RU', {
         timeZone: 'Europe/Moscow',
+        year: 'numeric', month: '2-digit', day: '2-digit',
         weekday: 'short',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       }).formatToParts(now);
       const map = {};
       parts.forEach(p => { map[p.type] = p.value; });
-      const wdMap = { 'пн': 0, 'вт': 1, 'ср': 2, 'чт': 3, 'пт': 4, 'сб': 5, 'вс': 6 };
-      const shiftedDay = wdMap[map.weekday] ?? 0;
+
+      const year = parseInt(map.year, 10);
+      const month = parseInt(map.month, 10);
+      const day = parseInt(map.day, 10);
       const h = parseInt(map.hour, 10);
       const m = parseInt(map.minute, 10);
       const s = parseInt(map.second, 10);
+
+      const absDayIndex = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
       const minutesFromMidnight = h * 60 + m + s / 60;
-      const absoluteMinutes = shiftedDay * 1440 + minutesFromMidnight;
-      return { shiftedDay, minutesFromMidnight, absoluteMinutes, rawDate: now };
+      const absoluteMinutes = absDayIndex * 1440 + minutesFromMidnight;
+
+      // shiftedDay: пн=0, вт=1, ..., вс=6. 1970-01-01 был четвергом (shifted=3).
+      const shiftedDay = ((absDayIndex % 7) + 7 + 3) % 7;
+
+      return {
+        shiftedDay,
+        minutesFromMidnight,
+        absoluteMinutes,
+        absDayIndex,
+        year, month, day,
+        rawDate: now
+      };
     }
 
-    function tripWorksOnDay(trip, shiftedDay) {
-      if (!trip.days) return true;
-      return trip.days.includes(shiftedDay);
+    // Проверка: работает ли рейс в заданный абсолютный день
+    function tripWorksOnDay(trip, candAbsDayIndex) {
+      if (trip.absDays) {
+        return trip.absDays.includes(candAbsDayIndex);
+      }
+      if (trip.days) {
+        const candShiftedDay = ((candAbsDayIndex % 7) + 7 + 3) % 7;
+        return trip.days.includes(candShiftedDay);
+      }
+      return true;
     }
 
     function findTrip(lineName, startStation, endStation, afterAbsoluteMinutes) {
@@ -1227,14 +1286,14 @@
         }
 
         const startDepartMin = startStop.depart;
-        const shiftedDay = Math.floor(afterAbsoluteMinutes / 1440);
+        // Абсолютный индекс дня текущего момента
+        const currentAbsDayIndex = Math.floor(afterAbsoluteMinutes / 1440);
 
         for (let dayOffset = 0; dayOffset <= 30; dayOffset++) {
-          const candShifted = shiftedDay + dayOffset;
-          const candDayShifted = ((candShifted % 7) + 7) % 7;
-          if (!tripWorksOnDay(trip, candDayShifted)) continue;
+          const candAbsDayIndex = currentAbsDayIndex + dayOffset;
+          if (!tripWorksOnDay(trip, candAbsDayIndex)) continue;
 
-          const candDepartAbs = candShifted * 1440 + startDepartMin;
+          const candDepartAbs = candAbsDayIndex * 1440 + startDepartMin;
           if (candDepartAbs < afterAbsoluteMinutes - 0.001) continue;
 
           const candArriveAbs = candDepartAbs + travelTime;
@@ -1363,20 +1422,21 @@
       return best;
     }
 
+    // Форматирование времени: absMinutes = минуты от 1970-01-01 (в московском календаре)
     function formatAbsTimeWithDay(absMinutes, todayShiftedDay) {
-      const shifted = Math.floor(absMinutes / 1440);
+      const absDay = Math.floor(absMinutes / 1440);
       const minutesInDay = ((absMinutes % 1440) + 1440) % 1440;
       const h = Math.floor(minutesInDay / 60);
       const m = Math.round(minutesInDay % 60);
       const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
 
-      const absShifted = ((shifted % 7) + 7) % 7;
-      const isToday = absShifted === todayShiftedDay;
+      const shiftedDay = ((absDay % 7) + 7 + 3) % 7;
+      const isToday = shiftedDay === todayShiftedDay;
 
       return {
         time: timeStr,
-        dayShort: DAY_NAMES_SHORT[absShifted],
-        dayFull: DAY_NAMES_FULL[absShifted],
+        dayShort: DAY_NAMES_SHORT[shiftedDay],
+        dayFull: DAY_NAMES_FULL[shiftedDay],
         isToday
       };
     }
@@ -1410,13 +1470,9 @@
       mapContent.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
     }
 
-    // =================================================================
-    // ПАН / ПИНЧ-ЗУМ / ТАП
-    // =================================================================
     let isDragging = false;
     let startX, startY, startTranslateX, startTranslateY;
 
-    // Для пинч-зума
     let pinchStartDist = 0;
     let pinchStartScale = 1;
     let pinchStartCenterX = 0;
@@ -1444,7 +1500,6 @@
       if (e.target.closest('.legend')) return;
       if (e.target.closest('.top-bar')) return;
 
-      // Обработка только для мыши (для touch — отдельные обработчики)
       if (e.pointerType && e.pointerType !== 'mouse') return;
 
       isDragging = true;
@@ -1469,16 +1524,13 @@
     window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
-    // ----- Touch-обработчики для панорамирования и пинч-зума -----
     function onTouchStart(e) {
-      // Если касание по интерфейсу (панель, кнопки) — не мешаем
       if (e.target.closest('.route-panel')) return;
       if (e.target.closest('.zoom-controls')) return;
       if (e.target.closest('.legend')) return;
       if (e.target.closest('.top-bar')) return;
 
       if (e.touches.length === 2) {
-        // Пинч-зум
         isPinching = true;
         isDragging = false;
         const t1 = e.touches[0], t2 = e.touches[1];
@@ -1492,7 +1544,6 @@
         pinchStartCenterY = center.y - rect.top;
         e.preventDefault();
       } else if (e.touches.length === 1) {
-        // Обычное панорамирование (но не тап по станции — там свой обработчик)
         if (e.target.closest('.station')) return;
         isDragging = true;
         isPinching = false;
@@ -1517,7 +1568,6 @@
         let newScale = pinchStartScale * factor;
         newScale = Math.min(3, Math.max(0.2, newScale));
 
-        // Масштабируем относительно центра пальцев
         const sr = newScale / pinchStartScale;
         translateX = pinchStartCenterX - (pinchStartCenterX - pinchStartTranslateX) * sr;
         translateY = pinchStartCenterY - (pinchStartCenterY - pinchStartTranslateY) * sr;
@@ -1541,7 +1591,6 @@
         isDragging = false;
       }
       if (e.touches.length === 1 && !isPinching) {
-        // Переход с двух пальцев на один — перезапускаем панорамирование
         isDragging = true;
         const t = e.touches[0];
         startX = t.clientX;
@@ -1556,7 +1605,6 @@
     viewport.addEventListener('touchend', onTouchEnd);
     viewport.addEventListener('touchcancel', onTouchEnd);
 
-    // ----- Кнопки зума -----
     viewport.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = -e.deltaY;
@@ -1590,9 +1638,6 @@
 
     initTransform();
 
-    // =================================================================
-    // МОБИЛЬНАЯ ПАНЕЛЬ — СВАЙП ДЛЯ СМЕНЫ СОСТОЯНИЯ
-    // =================================================================
     const routePanel = document.getElementById('routePanel');
     const panelHandle = document.getElementById('panelHandle');
 
@@ -1618,16 +1663,13 @@
 
       panelHandle.addEventListener('touchend', (e) => {
         if (Math.abs(handleTouchMoved) < 20) {
-          // Маленькое движение = тап. Переключаем по кругу: medium → expanded → collapsed → medium
           if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
           else if (routePanel.classList.contains('mob-expanded')) setPanelState('collapsed');
           else setPanelState('medium');
         } else if (handleTouchMoved < -30) {
-          // Свайп вверх — увеличиваем
           if (routePanel.classList.contains('mob-collapsed')) setPanelState('medium');
           else if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
         } else if (handleTouchMoved > 30) {
-          // Свайп вниз — уменьшаем
           if (routePanel.classList.contains('mob-expanded')) setPanelState('medium');
           else if (routePanel.classList.contains('mob-medium')) setPanelState('collapsed');
         }
@@ -1635,9 +1677,6 @@
       }, { passive: true });
     }
 
-    // =================================================================
-    // ЭЛЕМЕНТЫ UI
-    // =================================================================
     const fromBtn = document.getElementById('fromBtn');
     const toBtn = document.getElementById('toBtn');
     const fromLabel = document.getElementById('fromLabel');
@@ -1893,14 +1932,12 @@
       }
     });
 
-    // Закрытие выпадашек по клику вне (мышь)
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.route-field')) {
         closeAllDropdowns();
       }
     });
 
-    // Закрытие выпадашек по тапу вне (touch)
     document.addEventListener('touchstart', (e) => {
       if (!e.target.closest('.route-field')) {
         closeAllDropdowns();
@@ -1910,7 +1947,6 @@
     if (routeDetailsToggle) {
       routeDetailsToggle.addEventListener('click', () => {
         routeDetailsBox.classList.toggle('open');
-        // При открытии деталей — разворачиваем панель на мобильных
         if (window.innerWidth <= 700 && routeDetailsBox.classList.contains('open')) {
           setPanelState('expanded');
         }
