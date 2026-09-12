@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Метро — схема</title>
   <style>
     * {
@@ -25,6 +25,7 @@
     .app-container {
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       background: #ffffff;
@@ -50,6 +51,7 @@
       letter-spacing: -0.2px;
     }
 
+    /* ================= ПАНЕЛЬ МАРШРУТА ================= */
     .route-panel {
       position: absolute;
       background: #ffffff;
@@ -70,9 +72,11 @@
         left: 16px;
         width: 300px;
         max-height: calc(100vh - 92px);
+        max-height: calc(100dvh - 92px);
       }
     }
 
+    /* Мобильная версия: панель снизу, три состояния */
     @media (max-width: 700px) {
       .route-panel {
         left: 0;
@@ -81,48 +85,58 @@
         width: 100%;
         border-radius: 20px 20px 0 0;
         border-bottom: none;
-        padding: 0 14px 14px;
+        padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
         transition: max-height 0.3s ease;
-        max-height: 85vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         touch-action: auto;
+        /* По умолчанию — среднее состояние */
+        max-height: 60dvh;
       }
 
+      /* Свёрнутое: гарантированно видна ручка + одна строка поля */
       .route-panel.mob-collapsed {
-        max-height: 56px;
+        max-height: 92px;
         overflow: hidden;
       }
+
+      /* Среднее: время Москвы уже видно */
       .route-panel.mob-medium {
-        max-height: 55vh;
-      }
-      .route-panel.mob-expanded {
-        max-height: 88vh;
+        max-height: 60dvh;
       }
 
+      /* Развёрнутое: видно всё, включая детали маршрута */
+      .route-panel.mob-expanded {
+        max-height: 92dvh;
+      }
+
+      /* Ручка-«ремешок» — всегда наверху панели, sticky */
       .panel-handle {
         display: block;
         position: sticky;
         top: 0;
         background: #ffffff;
-        padding: 10px 0 6px;
+        padding: 12px 0 10px;
         margin: 0 -14px;
         text-align: center;
         cursor: grab;
         z-index: 5;
         touch-action: none;
+        /* Чтобы клик по ручке не «проваливался» на карту под панелью */
+        border-radius: 20px 20px 0 0;
       }
 
       .panel-handle-bar {
         display: inline-block;
-        width: 44px;
+        width: 48px;
         height: 5px;
         border-radius: 3px;
-        background: #d0d0d5;
+        background: #c8c8ce;
+        transition: background 0.15s;
       }
 
       .panel-handle:active .panel-handle-bar {
-        background: #a0a0a8;
+        background: #8a8a8e;
       }
     }
 
@@ -471,6 +485,7 @@
       color: #c0392b;
     }
 
+    /* ================= ДЕТАЛИ МАРШРУТА ================= */
     .route-details {
       margin-top: 6px;
       border-top: 1px solid #f0f0f0;
@@ -779,7 +794,6 @@
     }
 
     .legend-item.temporary .legend-dot {
-      /* Пунктирный маркер временной ветки */
       background: repeating-linear-gradient(
         45deg,
         #e91e8c,
@@ -900,11 +914,11 @@
               id="seg-orange-derevnya-ruiny" x1="1240" y1="672" x2="1080" y2="800"
               stroke="#e67e22" stroke-width="10" stroke-linecap="round" />
 
-        <!-- РОЗОВАЯ (Деревенская) — временная, идёт параллельно синей, чуть выше -->
+        <!-- РОЗОВАЯ (Деревенская) — тонкая, пунктирная -->
         <line class="line-segment dim-target" data-line="pink" data-from="derevnya" data-to="centr_labirinta"
               id="seg-pink-derevnya-centr_labirinta" x1="1200" y1="606" x2="1020" y2="606"
-              stroke="#e91e8c" stroke-width="4" stroke-linecap="round"
-              stroke-dasharray="14 6" />
+              stroke="#e91e8c" stroke-width="5" stroke-linecap="round"
+              stroke-dasharray="10 8" />
 
         <line id="transfer-more" class="dim-target" x1="1400" y1="620" x2="1440" y2="672"
               stroke="#7f7f8a" stroke-width="3" stroke-dasharray="5 6" />
@@ -1103,7 +1117,6 @@
       return h * 60 + m;
     }
 
-    // Преобразование календарной даты в абсолютный индекс дня (дней от 1970-01-01 UTC)
     function dateToAbsDayIndex(dateStr) {
       const [y, m, d] = dateStr.split('-').map(Number);
       return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
@@ -1188,9 +1201,6 @@
       ]}
     ];
 
-    // РОЗОВАЯ (Деревенская) — временная, привязана к конкретным датам 2026 года
-    // Рейс Деревня → Центр: отправление 11, 13, 15 сентября в 21:00, прибытие на след. день в 05:00
-    // Рейс Центр → Деревня: отправление 12, 14 сентября в 21:00, прибытие на след. день в 05:00
     const pinkTrips = [
       { line: 'pink', absDays: ['2026-09-11', '2026-09-13', '2026-09-15'].map(dateToAbsDayIndex), stops: [
         { station: 'derevnya', arrive: null, depart: hhmmToMinutes('21:00') },
@@ -1204,7 +1214,6 @@
 
     const allTrips = [...purpleTrips, ...orangeTrips, ...greenTrips, ...blueTrips, ...pinkTrips];
 
-    // ВАЖНО: теперь absoluteMinutes = минуты от 1970-01-01 00:00 (в московском календаре)
     function getMoscowNow() {
       const now = new Date();
       const parts = new Intl.DateTimeFormat('ru-RU', {
@@ -1227,7 +1236,6 @@
       const minutesFromMidnight = h * 60 + m + s / 60;
       const absoluteMinutes = absDayIndex * 1440 + minutesFromMidnight;
 
-      // shiftedDay: пн=0, вт=1, ..., вс=6. 1970-01-01 был четвергом (shifted=3).
       const shiftedDay = ((absDayIndex % 7) + 7 + 3) % 7;
 
       return {
@@ -1240,7 +1248,6 @@
       };
     }
 
-    // Проверка: работает ли рейс в заданный абсолютный день
     function tripWorksOnDay(trip, candAbsDayIndex) {
       if (trip.absDays) {
         return trip.absDays.includes(candAbsDayIndex);
@@ -1286,7 +1293,6 @@
         }
 
         const startDepartMin = startStop.depart;
-        // Абсолютный индекс дня текущего момента
         const currentAbsDayIndex = Math.floor(afterAbsoluteMinutes / 1440);
 
         for (let dayOffset = 0; dayOffset <= 30; dayOffset++) {
@@ -1422,7 +1428,6 @@
       return best;
     }
 
-    // Форматирование времени: absMinutes = минуты от 1970-01-01 (в московском календаре)
     function formatAbsTimeWithDay(absMinutes, todayShiftedDay) {
       const absDay = Math.floor(absMinutes / 1440);
       const minutesInDay = ((absMinutes % 1440) + 1440) % 1440;
@@ -1646,6 +1651,17 @@
       routePanel.classList.add('mob-' + state);
     }
 
+    // Автовыбор начального состояния под высоту экрана:
+    // - очень низкий экран (<500px) — сразу expanded, чтобы было видно время
+    // - средний (500-700px) — medium
+    // - высокий — medium
+    function autoInitPanelState() {
+      if (window.innerWidth > 700) return;
+      const h = window.innerHeight;
+      if (h < 500) setPanelState('expanded');
+      else setPanelState('medium');
+    }
+
     let handleTouchStartY = 0;
     let handleTouchMoved = 0;
 
@@ -1663,19 +1679,24 @@
 
       panelHandle.addEventListener('touchend', (e) => {
         if (Math.abs(handleTouchMoved) < 20) {
+          // Тап — цикл medium → expanded → collapsed → medium
           if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
           else if (routePanel.classList.contains('mob-expanded')) setPanelState('collapsed');
           else setPanelState('medium');
         } else if (handleTouchMoved < -30) {
+          // Свайп вверх — увеличиваем
           if (routePanel.classList.contains('mob-collapsed')) setPanelState('medium');
           else if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
         } else if (handleTouchMoved > 30) {
+          // Свайп вниз — уменьшаем
           if (routePanel.classList.contains('mob-expanded')) setPanelState('medium');
           else if (routePanel.classList.contains('mob-medium')) setPanelState('collapsed');
         }
         e.stopPropagation();
       }, { passive: true });
     }
+
+    autoInitPanelState();
 
     const fromBtn = document.getElementById('fromBtn');
     const toBtn = document.getElementById('toBtn');
