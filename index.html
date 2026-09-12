@@ -50,6 +50,7 @@
       letter-spacing: -0.2px;
     }
 
+    /* ================= ПАНЕЛЬ МАРШРУТА ================= */
     .route-panel {
       position: absolute;
       background: #ffffff;
@@ -61,7 +62,6 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      max-height: calc(100vh - 92px);
       overflow-y: auto;
     }
 
@@ -70,17 +70,69 @@
         top: 76px;
         left: 16px;
         width: 300px;
+        max-height: calc(100vh - 92px);
       }
     }
 
+    /* Мобильная версия: панель снизу, с тремя состояниями */
     @media (max-width: 700px) {
       .route-panel {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        width: auto;
-        max-height: 65vh;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+        padding: 0 14px 14px;
+        transition: max-height 0.3s ease;
+        max-height: 85vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        touch-action: auto;
       }
+
+      /* Состояния мобильной панели */
+      .route-panel.mob-collapsed {
+        max-height: 56px;
+        overflow: hidden;
+      }
+      .route-panel.mob-medium {
+        max-height: 55vh;
+      }
+      .route-panel.mob-expanded {
+        max-height: 88vh;
+      }
+
+      /* Ручка для свайпа */
+      .panel-handle {
+        display: block;
+        position: sticky;
+        top: 0;
+        background: #ffffff;
+        padding: 10px 0 6px;
+        margin: 0 -14px;
+        text-align: center;
+        cursor: grab;
+        z-index: 5;
+        touch-action: none;
+      }
+
+      .panel-handle-bar {
+        display: inline-block;
+        width: 44px;
+        height: 5px;
+        border-radius: 3px;
+        background: #d0d0d5;
+      }
+
+      .panel-handle:active .panel-handle-bar {
+        background: #a0a0a8;
+      }
+    }
+
+    /* На ПК ручка скрыта */
+    @media (min-width: 701px) {
+      .panel-handle { display: none; }
     }
 
     .route-field {
@@ -188,6 +240,8 @@
       padding: 6px;
       display: none;
       animation: dropdownIn 0.15s ease-out;
+      -webkit-overflow-scrolling: touch;
+      touch-action: auto;
     }
 
     .dropdown.open {
@@ -701,13 +755,15 @@
       border: 1px solid rgba(0, 0, 0, 0.04);
     }
 
+    /* На мобильных легенда сдвигается вправо вверх, чтобы не пересекаться с панелью */
     @media (max-width: 700px) {
       .legend {
-        bottom: 16px;
+        bottom: auto;
+        top: 76px;
         right: 12px;
         font-size: 11px;
         padding: 10px 12px;
-        opacity: 0.85;
+        opacity: 0.9;
       }
       .legend-dot { width: 12px; height: 12px; }
     }
@@ -740,7 +796,8 @@
 
     @media (max-width: 700px) {
       .zoom-controls {
-        bottom: 16px;
+        bottom: auto;
+        top: 76px;
         left: 12px;
       }
     }
@@ -788,6 +845,7 @@
       .app-title { font-size: 16px; }
       .zoom-btn { width: 40px; height: 40px; font-size: 22px; }
       .route-field-btn { font-size: 14px; padding: 11px 36px 11px 12px; }
+      .hint { font-size: 12px; }
     }
   </style>
 </head>
@@ -901,7 +959,11 @@
     </div>
   </div>
 
-  <div class="route-panel" id="routePanel">
+  <div class="route-panel mob-medium" id="routePanel">
+    <div class="panel-handle" id="panelHandle">
+      <span class="panel-handle-bar"></span>
+    </div>
+
     <div class="route-field">
       <button type="button" class="route-field-btn" id="fromBtn">
         <span class="field-marker empty" id="fromMarker"></span>
@@ -1336,7 +1398,7 @@
     function initTransform() {
       const vw = viewport.clientWidth, vh = viewport.clientHeight;
       if (vw < 700) {
-        scale = 0.4; translateX = 10; translateY = 60;
+        scale = 0.4; translateX = 10; translateY = 20;
       } else {
         scale = 0.7;
         translateX = (vw - 1500 * scale) / 2 + 120;
@@ -1348,13 +1410,45 @@
       mapContent.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
     }
 
-    let isDragging = false, startX, startY, startTranslateX, startTranslateY;
+    // =================================================================
+    // ПАН / ПИНЧ-ЗУМ / ТАП
+    // =================================================================
+    let isDragging = false;
+    let startX, startY, startTranslateX, startTranslateY;
+
+    // Для пинч-зума
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let pinchStartCenterX = 0;
+    let pinchStartCenterY = 0;
+    let pinchStartTranslateX = 0;
+    let pinchStartTranslateY = 0;
+    let isPinching = false;
+
+    function getTouchDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+    function getTouchCenter(t1, t2) {
+      return {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+    }
+
     function onPointerDown(e) {
       if (e.target.closest('.station')) return;
+      if (e.target.closest('.route-panel')) return;
+      if (e.target.closest('.zoom-controls')) return;
+      if (e.target.closest('.legend')) return;
+      if (e.target.closest('.top-bar')) return;
+
+      // Обработка только для мыши (для touch — отдельные обработчики)
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+
       isDragging = true;
-      const cx = e.clientX ?? e.touches?.[0]?.clientX;
-      const cy = e.clientY ?? e.touches?.[0]?.clientY;
-      if (cx === undefined) return;
+      const cx = e.clientX, cy = e.clientY;
       startX = cx; startY = cy;
       startTranslateX = translateX; startTranslateY = translateY;
       viewport.style.cursor = 'grabbing';
@@ -1362,9 +1456,8 @@
     }
     function onPointerMove(e) {
       if (!isDragging) return;
-      const cx = e.clientX ?? e.touches?.[0]?.clientX;
-      const cy = e.clientY ?? e.touches?.[0]?.clientY;
-      if (cx === undefined) return;
+      if (e.pointerType && e.pointerType !== 'mouse') return;
+      const cx = e.clientX, cy = e.clientY;
       translateX = startTranslateX + (cx - startX);
       translateY = startTranslateY + (cy - startY);
       updateTransform();
@@ -1375,11 +1468,95 @@
     viewport.addEventListener('mousedown', onPointerDown);
     window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
-    viewport.addEventListener('touchstart', onPointerDown, { passive: false });
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
-    window.addEventListener('touchend', onPointerUp);
-    window.addEventListener('touchcancel', onPointerUp);
 
+    // ----- Touch-обработчики для панорамирования и пинч-зума -----
+    function onTouchStart(e) {
+      // Если касание по интерфейсу (панель, кнопки) — не мешаем
+      if (e.target.closest('.route-panel')) return;
+      if (e.target.closest('.zoom-controls')) return;
+      if (e.target.closest('.legend')) return;
+      if (e.target.closest('.top-bar')) return;
+
+      if (e.touches.length === 2) {
+        // Пинч-зум
+        isPinching = true;
+        isDragging = false;
+        const t1 = e.touches[0], t2 = e.touches[1];
+        pinchStartDist = getTouchDistance(t1, t2);
+        pinchStartScale = scale;
+        pinchStartTranslateX = translateX;
+        pinchStartTranslateY = translateY;
+        const center = getTouchCenter(t1, t2);
+        const rect = viewport.getBoundingClientRect();
+        pinchStartCenterX = center.x - rect.left;
+        pinchStartCenterY = center.y - rect.top;
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        // Обычное панорамирование (но не тап по станции — там свой обработчик)
+        if (e.target.closest('.station')) return;
+        isDragging = true;
+        isPinching = false;
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      }
+    }
+
+    function onTouchMove(e) {
+      if (e.target.closest('.route-panel')) return;
+      if (e.target.closest('.zoom-controls')) return;
+      if (e.target.closest('.legend')) return;
+
+      if (isPinching && e.touches.length === 2) {
+        const t1 = e.touches[0], t2 = e.touches[1];
+        const dist = getTouchDistance(t1, t2);
+        if (pinchStartDist < 1) return;
+        const factor = dist / pinchStartDist;
+        let newScale = pinchStartScale * factor;
+        newScale = Math.min(3, Math.max(0.2, newScale));
+
+        // Масштабируем относительно центра пальцев
+        const sr = newScale / pinchStartScale;
+        translateX = pinchStartCenterX - (pinchStartCenterX - pinchStartTranslateX) * sr;
+        translateY = pinchStartCenterY - (pinchStartCenterY - pinchStartTranslateY) * sr;
+        scale = newScale;
+        updateTransform();
+        e.preventDefault();
+      } else if (isDragging && e.touches.length === 1 && !e.target.closest('.station')) {
+        const t = e.touches[0];
+        translateX = startTranslateX + (t.clientX - startX);
+        translateY = startTranslateY + (t.clientY - startY);
+        updateTransform();
+        e.preventDefault();
+      }
+    }
+
+    function onTouchEnd(e) {
+      if (isPinching && e.touches.length < 2) {
+        isPinching = false;
+      }
+      if (isDragging && e.touches.length === 0) {
+        isDragging = false;
+      }
+      if (e.touches.length === 1 && !isPinching) {
+        // Переход с двух пальцев на один — перезапускаем панорамирование
+        isDragging = true;
+        const t = e.touches[0];
+        startX = t.clientX;
+        startY = t.clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      }
+    }
+
+    viewport.addEventListener('touchstart', onTouchStart, { passive: false });
+    viewport.addEventListener('touchmove', onTouchMove, { passive: false });
+    viewport.addEventListener('touchend', onTouchEnd);
+    viewport.addEventListener('touchcancel', onTouchEnd);
+
+    // ----- Кнопки зума -----
     viewport.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = -e.deltaY;
@@ -1413,6 +1590,54 @@
 
     initTransform();
 
+    // =================================================================
+    // МОБИЛЬНАЯ ПАНЕЛЬ — СВАЙП ДЛЯ СМЕНЫ СОСТОЯНИЯ
+    // =================================================================
+    const routePanel = document.getElementById('routePanel');
+    const panelHandle = document.getElementById('panelHandle');
+
+    function setPanelState(state) {
+      routePanel.classList.remove('mob-collapsed', 'mob-medium', 'mob-expanded');
+      routePanel.classList.add('mob-' + state);
+    }
+
+    let handleTouchStartY = 0;
+    let handleTouchMoved = 0;
+
+    if (panelHandle) {
+      panelHandle.addEventListener('touchstart', (e) => {
+        handleTouchStartY = e.touches[0].clientY;
+        handleTouchMoved = 0;
+        e.stopPropagation();
+      }, { passive: true });
+
+      panelHandle.addEventListener('touchmove', (e) => {
+        handleTouchMoved = e.touches[0].clientY - handleTouchStartY;
+        e.stopPropagation();
+      }, { passive: true });
+
+      panelHandle.addEventListener('touchend', (e) => {
+        if (Math.abs(handleTouchMoved) < 20) {
+          // Маленькое движение = тап. Переключаем по кругу: medium → expanded → collapsed → medium
+          if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
+          else if (routePanel.classList.contains('mob-expanded')) setPanelState('collapsed');
+          else setPanelState('medium');
+        } else if (handleTouchMoved < -30) {
+          // Свайп вверх — увеличиваем
+          if (routePanel.classList.contains('mob-collapsed')) setPanelState('medium');
+          else if (routePanel.classList.contains('mob-medium')) setPanelState('expanded');
+        } else if (handleTouchMoved > 30) {
+          // Свайп вниз — уменьшаем
+          if (routePanel.classList.contains('mob-expanded')) setPanelState('medium');
+          else if (routePanel.classList.contains('mob-medium')) setPanelState('collapsed');
+        }
+        e.stopPropagation();
+      }, { passive: true });
+    }
+
+    // =================================================================
+    // ЭЛЕМЕНТЫ UI
+    // =================================================================
     const fromBtn = document.getElementById('fromBtn');
     const toBtn = document.getElementById('toBtn');
     const fromLabel = document.getElementById('fromLabel');
@@ -1502,9 +1727,6 @@
 
     function applyRouteHighlight(pathOrSteps) {
       clearRouteHighlight();
-      // ИСПРАВЛЕНИЕ: проверяем на пустоту, а не на длину < 2.
-      // Это позволяет корректно обрабатывать маршруты из одного сегмента
-      // (например, «Город → Горы»).
       if (!pathOrSteps || pathOrSteps.length === 0) return;
 
       let stationPath = [];
@@ -1518,7 +1740,6 @@
         for (const step of steps) stationPath.push(step.to);
       }
 
-      // Если после разбора станций меньше двух — нечего подсвечивать
       if (stationPath.length < 2) return;
 
       svgEl.classList.add('route-active');
@@ -1672,15 +1893,27 @@
       }
     });
 
+    // Закрытие выпадашек по клику вне (мышь)
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.route-field')) {
         closeAllDropdowns();
       }
     });
 
+    // Закрытие выпадашек по тапу вне (touch)
+    document.addEventListener('touchstart', (e) => {
+      if (!e.target.closest('.route-field')) {
+        closeAllDropdowns();
+      }
+    }, { passive: true });
+
     if (routeDetailsToggle) {
       routeDetailsToggle.addEventListener('click', () => {
         routeDetailsBox.classList.toggle('open');
+        // При открытии деталей — разворачиваем панель на мобильных
+        if (window.innerWidth <= 700 && routeDetailsBox.classList.contains('open')) {
+          setPanelState('expanded');
+        }
       });
     }
 
