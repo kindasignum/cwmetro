@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Метро — схема</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background: #f2f2f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .app-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e5e5;
+      z-index: 10;
+      flex-shrink: 0;
+      min-height: 56px;
+    }
+
+    .app-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: #1f1f1f;
+      letter-spacing: -0.2px;
+    }
+
+    .route-panel {
+      position: absolute;
+      background: #ffffff;
+      border: 1px solid #ececf1;
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100vh - 92px);
+      overflow-y: auto;
+    }
+
+    @media (min-width: 701px) {
+      .route-panel {
+        top: 76px;
+        left: 16px;
+        width: 300px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .route-panel {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+        max-height: 65vh;
+      }
+    }
+
+    .route-field {
+      position: relative;
+    }
+
+    .route-field-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f7fa;
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      padding: 10px 38px 10px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1f1f1f;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      text-align: left;
+      font-family: inherit;
+      position: relative;
+    }
+
+    .route-field-btn:hover {
+      background: #f0f0f5;
+    }
+
+    .route-field-btn.open {
+      border-color: #0077ff;
+      background: #ffffff;
+    }
+
+    .field-marker {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid white;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+      transition: background 0.15s;
+    }
+
+    .field-marker.empty {
+      background: #d8d8dd !important;
+    }
+
+    .field-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .field-label.placeholder {
+      color: #8a8a8e;
+      font-weight: 400;
+    }
+
+    .clear-field-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.06);
+      color: #5a5a5e;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      font-family: inherit;
+      padding: 0;
+      font-weight: 500;
+    }
+
+    .clear-field-btn.visible {
+      display: flex;
+    }
+
+    .clear-field-btn:hover {
+      background: rgba(0, 0, 0, 0.12);
+      color: #1f1f1f;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+      border: 1px solid #ececf1;
+      max-height: 280px;
+      overflow-y: auto;
+      z-index: 100;
+      padding: 6px;
+      display: none;
+      animation: dropdownIn 0.15s ease-out;
+    }
+
+    .dropdown.open {
+      display: block;
+    }
+
+    @keyframes dropdownIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.1s;
+      font-size: 14px;
+      color: #1f1f1f;
+      font-weight: 500;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item.focused {
+      background: #f0f0f5;
+    }
+
+    .dropdown-item.selected {
+      background: rgba(0, 119, 255, 0.08);
+      color: #0077ff;
+    }
+
+    .dropdown-item .item-lines {
+      display: flex;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .dropdown-item .line-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid white;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    }
+
+    .dropdown-item .item-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dropdown-item.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    .dropdown::-webkit-scrollbar-thumb {
+      background: #d8d8dd;
+      border-radius: 3px;
+    }
+
+    .swap-btn {
+      align-self: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: #f0f0f5;
+      color: #0077ff;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.2s;
+      font-family: inherit;
+      line-height: 1;
+      padding-bottom: 2px;
+    }
+
+    .swap-btn:hover {
+      background: #e5e5ec;
+    }
+
+    .swap-btn:active {
+      transform: rotate(180deg);
+    }
+
+    .route-summary {
+      font-size: 12px;
+      color: #8a8a8e;
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    .moscow-time {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .moscow-time-label {
+      font-size: 10px;
+      color: #8a8a8e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .moscow-time-date {
+      font-size: 12px;
+      color: #5a5a5e;
+      font-weight: 500;
+    }
+
+    .moscow-time-clock {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1f1f1f;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1px;
+      font-feature-settings: "tnum";
+    }
+
+    .route-timing {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid #f0f0f0;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .route-timing.visible {
+      display: flex;
+    }
+
+    .timing-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .timing-label {
+      font-size: 11px;
+      color: #8a8a8e;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+
+    .timing-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f1f1f;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .timing-value .day-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #0077ff;
+      background: rgba(0, 119, 255, 0.1);
+      border-radius: 6px;
+      padding: 1px 5px;
+      margin-right: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      vertical-align: 2px;
+    }
+
+    .timing-durations {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .timing-duration {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0077ff;
+      text-align: center;
+      padding: 7px 6px;
+      background: rgba(0, 119, 255, 0.08);
+      border-radius: 10px;
+      line-height: 1.2;
+    }
+
+    .timing-duration .duration-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      color: #5a5a5e;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+    }
+
+    .timing-duration.wait {
+      background: rgba(230, 126, 34, 0.1);
+      color: #d35400;
+    }
+
+    .timing-note {
+      font-size: 11px;
+      color: #8a8a8e;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .timing-note.warn {
+      color: #c0392b;
+    }
+
+    /* ================= ДЕТАЛИ МАРШРУТА ================= */
+    .route-details {
+      margin-top: 6px;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 8px;
+    }
+
+    .route-details-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 2px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #0077ff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+
+    .route-details-toggle:hover {
+      color: #0056b3;
+    }
+
+    .route-details-toggle .details-arrow {
+      font-size: 10px;
+      transition: transform 0.2s;
+      color: #8a8a8e;
+    }
+
+    .route-details.open .route-details-toggle .details-arrow {
+      transform: rotate(180deg);
+    }
+
+    .route-details-body {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      padding: 8px 0 2px 0;
+    }
+
+    .route-details.open .route-details-body {
+      display: flex;
+    }
+
+    .detail-stop {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      position: relative;
+    }
+
+    .detail-stop:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 28px;
+      bottom: -8px;
+      width: 3px;
+      background: #e5e5e5;
+      border-radius: 2px;
+    }
+
+    .detail-stop.seg-purple:not(:last-child)::before { background: #8e44ad; }
+    .detail-stop.seg-orange:not(:last-child)::before { background: #e67e22; }
+    .detail-stop.seg-green:not(:last-child)::before  { background: #27ae60; }
+    .detail-stop.seg-blue:not(:last-child)::before   { background: #2980b9; }
+
+    .detail-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: #ffffff;
+      border: 4px solid #8a8a8e;
+      box-sizing: border-box;
+      z-index: 1;
+      position: relative;
+    }
+
+    .detail-stop.kind-start .detail-dot {
+      border-color: var(--dot-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot-color) 20%, transparent);
+    }
+
+    .detail-stop.kind-end .detail-dot {
+      border-color: var(--dot-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot-color) 20%, transparent);
+    }
+
+    .detail-stop.kind-transfer .detail-dot {
+      border: none;
+      background: linear-gradient(
+        to bottom,
+        var(--top-color) 0%,
+        var(--top-color) 50%,
+        var(--bottom-color) 50%,
+        var(--bottom-color) 100%
+      );
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-content {
+      flex: 1;
+      min-width: 0;
+      padding-top: 1px;
+    }
+
+    .detail-station-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1f1f1f;
+      margin-bottom: 2px;
+      line-height: 1.2;
+    }
+
+    .detail-action {
+      font-size: 11px;
+      color: #5a5a5e;
+      font-weight: 500;
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+
+    .detail-action .line-dot-inline {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin: 0 2px 1px 2px;
+    }
+
+    .detail-time {
+      font-size: 12px;
+      color: #0077ff;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+    }
+
+    .detail-time .day-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #0077ff;
+      background: rgba(0, 119, 255, 0.1);
+      border-radius: 5px;
+      padding: 0px 4px;
+      margin-right: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      vertical-align: 1px;
+    }
+
+    .map-viewport {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: #fafafc;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .map-viewport:active {
+      cursor: grabbing;
+    }
+
+    .map-content {
+      transform-origin: 0 0;
+      will-change: transform;
+      position: relative;
+      width: 1500px;
+      height: 950px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #fafafc;
+    }
+
+    #metroSvg.route-active .dim-target {
+      opacity: 0.15;
+      transition: opacity 0.25s ease;
+    }
+
+    #metroSvg.route-active .active {
+      opacity: 1 !important;
+      transition: opacity 0.25s ease;
+    }
+
+    .line-segment {
+      transition: opacity 0.25s ease;
+    }
+
+    .station {
+      cursor: pointer;
+      transition: opacity 0.25s ease;
+    }
+
+    .station:hover .station-circle {
+      filter: brightness(0.85) drop-shadow(0 0 4px rgba(0,0,0,0.3));
+    }
+
+    .station:hover .pill-half {
+      filter: brightness(0.9) drop-shadow(0 0 4px rgba(0,0,0,0.3));
+    }
+
+    .station.selected .station-circle {
+      filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    }
+
+    .station-label {
+      font-size: 14px;
+      font-weight: 600;
+      fill: #2c2c2c;
+      pointer-events: none;
+      user-select: none;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: #fafafc;
+      stroke-width: 4px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      transition: opacity 0.25s ease;
+    }
+
+    .route-bubble {
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .route-bubble.visible {
+      opacity: 1;
+    }
+
+    .route-bubble .bubble-body {
+      fill: #1f1f1f;
+      stroke: white;
+      stroke-width: 2;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+    }
+
+    .route-bubble .bubble-text {
+      fill: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      letter-spacing: 0.2px;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      padding: 12px 16px;
+      border-radius: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      z-index: 20;
+      pointer-events: none;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    @media (max-width: 700px) {
+      .legend {
+        bottom: 16px;
+        right: 12px;
+        font-size: 11px;
+        padding: 10px 12px;
+        opacity: 0.85;
+      }
+      .legend-dot { width: 12px; height: 12px; }
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: #2c2c2c;
+    }
+
+    .legend-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px white;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 20;
+    }
+
+    @media (max-width: 700px) {
+      .zoom-controls {
+        bottom: 16px;
+        left: 12px;
+      }
+    }
+
+    .zoom-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: white;
+      border: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      font-size: 24px;
+      font-weight: 300;
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .zoom-btn:hover { background: #f5f5f5; }
+    .zoom-btn:active { background: #e8e8e8; }
+
+    .hint {
+      position: absolute;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+      z-index: 30;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+      transition: opacity 0.4s;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+      .app-title { font-size: 16px; }
+      .zoom-btn { width: 40px; height: 40px; font-size: 22px; }
+      .route-field-btn { font-size: 14px; padding: 11px 36px 11px 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="top-bar">
+    <div class="app-title">Метро</div>
+  </div>
+
+  <div class="map-viewport" id="viewport">
+    <div class="map-content" id="mapContent">
+      <svg viewBox="0 0 1500 950" preserveAspectRatio="xMidYMid meet" id="metroSvg">
+        <rect width="1500" height="950" fill="#fafafc" class="dim-target" />
+
+        <!-- ФИОЛЕТОВАЯ -->
+        <line class="line-segment dim-target" data-line="purple" data-from="gorod" data-to="gory"
+              id="seg-purple-gorod-gory" x1="180" y1="220" x2="400" y2="220"
+              stroke="#8e44ad" stroke-width="10" stroke-linecap="round" />
+        <line class="line-segment dim-target" data-line="purple" data-from="gory" data-to="poselok"
+              id="seg-purple-gory-poselok" x1="400" y1="220" x2="620" y2="400"
+              stroke="#8e44ad" stroke-width="10" stroke-linecap="round" />
+        <line class="line-segment dim-target" data-line="purple" data-from="poselok" data-to="predpustynye_ozero"
+              id="seg-purple-poselok-predpustynye_ozero" x1="620" y1="400" x2="780" y2="400"
+              stroke="#8e44ad" stroke-width="10" stroke-linecap="round" />
+
+        <!-- ЗЕЛЁНАЯ -->
+        <line class="line-segment dim-target" data-line="green" data-from="predpustynye_ozero" data-to="oazis"
+              id="seg-green-predpustynye_ozero-oazis" x1="780" y1="400" x2="900" y2="520"
+              stroke="#27ae60" stroke-width="10" stroke-linecap="round" />
+        <line class="line-segment dim-target" data-line="green" data-from="oazis" data-to="centr_labirinta"
+              id="seg-green-oazis-centr_labirinta" x1="900" y1="520" x2="1020" y2="620"
+              stroke="#27ae60" stroke-width="10" stroke-linecap="round" />
+
+        <!-- СИНЯЯ -->
+        <line class="line-segment dim-target" data-line="blue" data-from="centr_labirinta" data-to="derevnya"
+              id="seg-blue-centr_labirinta-derevnya" x1="1020" y1="620" x2="1200" y2="620"
+              stroke="#2980b9" stroke-width="10" stroke-linecap="round" />
+        <line class="line-segment dim-target" data-line="blue" data-from="derevnya" data-to="predpustynye_more"
+              id="seg-blue-derevnya-predpustynye_more" x1="1200" y1="620" x2="1400" y2="620"
+              stroke="#2980b9" stroke-width="10" stroke-linecap="round" />
+
+        <!-- ОРАНЖЕВАЯ -->
+        <line class="line-segment dim-target" data-line="orange" data-from="predpustynye_more" data-to="derevnya"
+              id="seg-orange-predpustynye_more-derevnya" x1="1440" y1="672" x2="1240" y2="672"
+              stroke="#e67e22" stroke-width="10" stroke-linecap="round" />
+        <line class="line-segment dim-target" data-line="orange" data-from="derevnya" data-to="ruiny"
+              id="seg-orange-derevnya-ruiny" x1="1240" y1="672" x2="1080" y2="800"
+              stroke="#e67e22" stroke-width="10" stroke-linecap="round" />
+
+        <line id="transfer-more" class="dim-target" x1="1400" y1="620" x2="1440" y2="672"
+              stroke="#7f7f8a" stroke-width="3" stroke-dasharray="5 6" />
+        <line id="transfer-derevnya" class="dim-target" x1="1200" y1="620" x2="1240" y2="672"
+              stroke="#7f7f8a" stroke-width="3" stroke-dasharray="5 6" />
+
+        <!-- СТАНЦИИ -->
+        <g class="station dim-target" data-id="gorod" data-name="Город" data-lines="purple">
+          <circle cx="180" cy="220" r="12" fill="#8e44ad" stroke="white" stroke-width="3" class="station-circle" />
+          <text x="180" y="190" class="station-label">Город</text>
+        </g>
+        <g class="station dim-target" data-id="gory" data-name="Горы" data-lines="purple">
+          <circle cx="400" cy="220" r="12" fill="#8e44ad" stroke="white" stroke-width="3" class="station-circle" />
+          <text x="400" y="190" class="station-label">Горы</text>
+        </g>
+        <g class="station dim-target" data-id="poselok" data-name="Посёлок" data-lines="purple">
+          <circle cx="620" cy="400" r="12" fill="#8e44ad" stroke="white" stroke-width="3" class="station-circle" />
+          <text x="620" y="370" class="station-label">Посёлок</text>
+        </g>
+        <g class="station dim-target" data-id="oazis" data-name="Оазис" data-lines="green">
+          <circle cx="900" cy="520" r="12" fill="#27ae60" stroke="white" stroke-width="3" class="station-circle" />
+          <text x="900" y="490" class="station-label">Оазис</text>
+        </g>
+        <g class="station dim-target" data-id="ruiny" data-name="Руины" data-lines="orange">
+          <circle cx="1080" cy="800" r="12" fill="#e67e22" stroke="white" stroke-width="3" class="station-circle" />
+          <text x="1080" y="835" class="station-label">Руины</text>
+        </g>
+
+        <g class="station dim-target" data-id="predpustynye_more" data-name="Предпустынье (море)" data-lines="orange,blue">
+          <circle cx="1400" cy="620" r="10" fill="#2980b9" stroke="white" stroke-width="2.5" class="station-circle" />
+          <circle cx="1440" cy="672" r="10" fill="#e67e22" stroke="white" stroke-width="2.5" class="station-circle" />
+          <text x="1400" y="580" class="station-label" style="font-weight:700; font-size:14px;">Предпустынье</text>
+          <text x="1400" y="598" class="station-label" style="font-weight:700; font-size:13px; fill:#2980b9;">(море)</text>
+        </g>
+
+        <g class="station dim-target" data-id="derevnya" data-name="Деревня" data-lines="orange,blue">
+          <circle cx="1200" cy="620" r="10" fill="#2980b9" stroke="white" stroke-width="2.5" class="station-circle" />
+          <circle cx="1240" cy="672" r="10" fill="#e67e22" stroke="white" stroke-width="2.5" class="station-circle" />
+          <text x="1200" y="580" class="station-label" style="font-weight:700; font-size:15px;">Деревня</text>
+        </g>
+
+        <g class="station dim-target" data-id="predpustynye_ozero" data-name="Предпустынье (озеро)" data-lines="purple,green">
+          <path d="M 780,386 A 14,14 0 0 0 780,414 Z"
+                fill="#8e44ad" stroke="white" stroke-width="2.5" class="pill-half" stroke-linejoin="round" />
+          <path d="M 780,386 A 14,14 0 0 1 780,414 Z"
+                fill="#27ae60" stroke="white" stroke-width="2.5" class="pill-half" stroke-linejoin="round" />
+          <line x1="780" y1="386" x2="780" y2="414" stroke="white" stroke-width="2" />
+          <text x="780" y="360" class="station-label" style="font-weight:700; font-size:14px;">Предпустынье</text>
+          <text x="780" y="380" class="station-label" style="font-weight:700; font-size:13px; fill:#27ae60;">(озеро)</text>
+        </g>
+
+        <g class="station dim-target" data-id="centr_labirinta" data-name="Центр лабиринта" data-lines="green,blue">
+          <path d="M 1020,606 A 14,14 0 0 0 1020,634 Z"
+                fill="#27ae60" stroke="white" stroke-width="2.5" class="pill-half" stroke-linejoin="round" />
+          <path d="M 1020,606 A 14,14 0 0 1 1020,634 Z"
+                fill="#2980b9" stroke="white" stroke-width="2.5" class="pill-half" stroke-linejoin="round" />
+          <line x1="1020" y1="606" x2="1020" y2="634" stroke="white" stroke-width="2" />
+          <text x="1020" y="580" class="station-label" style="font-weight:700; font-size:15px;">Центр лабиринта</text>
+        </g>
+
+        <g id="bubbleLayer"></g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="route-panel" id="routePanel">
+    <div class="route-field">
+      <button type="button" class="route-field-btn" id="fromBtn">
+        <span class="field-marker empty" id="fromMarker"></span>
+        <span class="field-label placeholder" id="fromLabel">Откуда</span>
+      </button>
+      <button class="clear-field-btn" id="fromClear" aria-label="Очистить">×</button>
+      <div class="dropdown" id="fromDropdown"></div>
+    </div>
+
+    <button class="swap-btn" id="swapBtn" title="Поменять направление">⇆</button>
+
+    <div class="route-field">
+      <button type="button" class="route-field-btn" id="toBtn">
+        <span class="field-marker empty" id="toMarker"></span>
+        <span class="field-label placeholder" id="toLabel">Куда</span>
+      </button>
+      <button class="clear-field-btn" id="toClear" aria-label="Очистить">×</button>
+      <div class="dropdown" id="toDropdown"></div>
+    </div>
+
+    <div class="route-summary" id="routeSummary">Выберите станции</div>
+
+    <div class="moscow-time" id="moscowTime">
+      <div class="moscow-time-label">Москва</div>
+      <div class="moscow-time-date" id="moscowDate">—</div>
+      <div class="moscow-time-clock" id="moscowClock">--:--:--</div>
+    </div>
+
+    <div class="route-timing" id="routeTiming">
+      <div class="timing-row">
+        <span class="timing-label">Отправление</span>
+        <span class="timing-value" id="departureTime">—</span>
+      </div>
+      <div class="timing-row">
+        <span class="timing-label">Прибытие</span>
+        <span class="timing-value" id="arrivalTime">—</span>
+      </div>
+      <div class="timing-durations">
+        <div class="timing-duration wait" id="waitDuration">
+          <span class="duration-label">До отправления</span>
+          —
+        </div>
+        <div class="timing-duration" id="routeDuration">
+          <span class="duration-label">В пути</span>
+          —
+        </div>
+      </div>
+      <div class="timing-note" id="timingNote"></div>
+
+      <div class="route-details" id="routeDetails">
+        <button type="button" class="route-details-toggle" id="routeDetailsToggle">
+          <span>Детали маршрута</span>
+          <span class="details-arrow">▼</span>
+        </button>
+        <div class="route-details-body" id="routeDetailsBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#8e44ad;"></span> Горная</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#e67e22;"></span> Руинная</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#27ae60;"></span> Озёрная</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#2980b9;"></span> Морская</div>
+  </div>
+
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoomIn">+</button>
+    <button class="zoom-btn" id="zoomOut">−</button>
+  </div>
+
+  <div class="hint" id="hint">Нажмите на станцию, чтобы начать маршрут</div>
+</div>
+
+<script>
+  (function() {
+    const stationsData = [
+      { id: 'gorod',               name: 'Город',                 x: 180,  y: 220, lines: ['purple'] },
+      { id: 'gory',                name: 'Горы',                  x: 400,  y: 220, lines: ['purple'] },
+      { id: 'poselok',             name: 'Посёлок',               x: 620,  y: 400, lines: ['purple'] },
+      { id: 'predpustynye_ozero',  name: 'Предпустынье (озеро)',  x: 780,  y: 400, lines: ['purple', 'green'] },
+      { id: 'predpustynye_more',   name: 'Предпустынье (море)',   x: 1400, y: 646, lines: ['orange', 'blue'] },
+      { id: 'derevnya',            name: 'Деревня',               x: 1200, y: 646, lines: ['orange', 'blue'] },
+      { id: 'ruiny',               name: 'Руины',                 x: 1080, y: 800, lines: ['orange'] },
+      { id: 'oazis',               name: 'Оазис',                 x: 900,  y: 520, lines: ['green'] },
+      { id: 'centr_labirinta',     name: 'Центр лабиринта',       x: 1020, y: 620, lines: ['green', 'blue'] }
+    ];
+
+    const LINE_COLORS = {
+      purple: '#8e44ad',
+      orange: '#e67e22',
+      green:  '#27ae60',
+      blue:   '#2980b9'
+    };
+
+    const LINE_NAMES = {
+      purple: { accusative: 'Горную', genitive: 'Горной', nominative: 'Горная' },
+      orange: { accusative: 'Руинную', genitive: 'Руинной', nominative: 'Руинная' },
+      green:  { accusative: 'Озёрную', genitive: 'Озёрной', nominative: 'Озёрная' },
+      blue:   { accusative: 'Морскую', genitive: 'Морской', nominative: 'Морская' }
+    };
+
+    const lines = {
+      purple: ['gorod', 'gory', 'poselok', 'predpustynye_ozero'],
+      orange: ['predpustynye_more', 'derevnya', 'ruiny'],
+      green:  ['predpustynye_ozero', 'oazis', 'centr_labirinta'],
+      blue:   ['centr_labirinta', 'derevnya', 'predpustynye_more']
+    };
+
+    const graph = {};
+    stationsData.forEach(s => { graph[s.id] = new Set(); });
+    for (const line in lines) {
+      const seq = lines[line];
+      for (let i = 0; i < seq.length - 1; i++) {
+        graph[seq[i]].add(seq[i+1]);
+        graph[seq[i+1]].add(seq[i]);
+      }
+    }
+
+    function hhmmToMinutes(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    const DAY_NAMES_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+    const DAY_NAMES_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+    const purpleTrips = [
+      { line: 'purple', days: null, stops: [
+        { station: 'gorod', arrive: null, depart: hhmmToMinutes('08:00') },
+        { station: 'gory', arrive: hhmmToMinutes('08:45'), depart: hhmmToMinutes('09:15') },
+        { station: 'poselok', arrive: hhmmToMinutes('10:00'), depart: hhmmToMinutes('10:15') },
+        { station: 'predpustynye_ozero', arrive: hhmmToMinutes('11:00'), depart: null }
+      ]},
+      { line: 'purple', days: null, stops: [
+        { station: 'gorod', arrive: null, depart: hhmmToMinutes('16:00') },
+        { station: 'gory', arrive: hhmmToMinutes('16:45'), depart: hhmmToMinutes('17:15') },
+        { station: 'poselok', arrive: hhmmToMinutes('18:00'), depart: hhmmToMinutes('18:15') },
+        { station: 'predpustynye_ozero', arrive: hhmmToMinutes('19:00'), depart: null }
+      ]},
+      { line: 'purple', days: null, stops: [
+        { station: 'predpustynye_ozero', arrive: null, depart: hhmmToMinutes('12:00') },
+        { station: 'poselok', arrive: hhmmToMinutes('12:45'), depart: hhmmToMinutes('13:00') },
+        { station: 'gory', arrive: hhmmToMinutes('13:45'), depart: hhmmToMinutes('14:15') },
+        { station: 'gorod', arrive: hhmmToMinutes('15:00'), depart: null }
+      ]},
+      { line: 'purple', days: null, stops: [
+        { station: 'predpustynye_ozero', arrive: null, depart: hhmmToMinutes('20:00') },
+        { station: 'poselok', arrive: hhmmToMinutes('20:45'), depart: hhmmToMinutes('21:00') },
+        { station: 'gory', arrive: hhmmToMinutes('21:45'), depart: hhmmToMinutes('22:15') },
+        { station: 'gorod', arrive: hhmmToMinutes('23:00'), depart: null }
+      ]}
+    ];
+
+    const orangeTrips = [
+      { line: 'orange', days: null, stops: [
+        { station: 'predpustynye_more', arrive: null, depart: hhmmToMinutes('08:00') },
+        { station: 'derevnya', arrive: hhmmToMinutes('10:00'), depart: hhmmToMinutes('11:00') },
+        { station: 'ruiny', arrive: hhmmToMinutes('12:00'), depart: null }
+      ]},
+      { line: 'orange', days: null, stops: [
+        { station: 'predpustynye_more', arrive: null, depart: hhmmToMinutes('17:00') },
+        { station: 'derevnya', arrive: hhmmToMinutes('19:00'), depart: hhmmToMinutes('20:00') },
+        { station: 'ruiny', arrive: hhmmToMinutes('21:00'), depart: null }
+      ]},
+      { line: 'orange', days: null, stops: [
+        { station: 'ruiny', arrive: null, depart: hhmmToMinutes('12:10') },
+        { station: 'derevnya', arrive: hhmmToMinutes('13:10'), depart: hhmmToMinutes('14:10') },
+        { station: 'predpustynye_more', arrive: hhmmToMinutes('16:10'), depart: null }
+      ]},
+      { line: 'orange', days: null, stops: [
+        { station: 'ruiny', arrive: null, depart: hhmmToMinutes('21:10') },
+        { station: 'derevnya', arrive: hhmmToMinutes('22:10'), depart: hhmmToMinutes('23:10') },
+        { station: 'predpustynye_more', arrive: hhmmToMinutes('01:10') + 1440, depart: null }
+      ]}
+    ];
+
+    const greenTrips = [
+      { line: 'green', days: [0, 2, 4], stops: [
+        { station: 'predpustynye_ozero', arrive: null, depart: hhmmToMinutes('06:00') },
+        { station: 'oazis', arrive: hhmmToMinutes('08:00'), depart: hhmmToMinutes('09:00') },
+        { station: 'centr_labirinta', arrive: hhmmToMinutes('18:00'), depart: null }
+      ]},
+      { line: 'green', days: [1, 3, 5], stops: [
+        { station: 'centr_labirinta', arrive: null, depart: hhmmToMinutes('03:30') },
+        { station: 'oazis', arrive: hhmmToMinutes('12:30'), depart: hhmmToMinutes('13:30') },
+        { station: 'predpustynye_ozero', arrive: hhmmToMinutes('15:30'), depart: null }
+      ]}
+    ];
+
+    const blueTrips = [
+      { line: 'blue', days: [0, 2, 4], stops: [
+        { station: 'predpustynye_more', arrive: null, depart: hhmmToMinutes('06:00') },
+        { station: 'derevnya', arrive: hhmmToMinutes('08:00'), depart: hhmmToMinutes('09:00') },
+        { station: 'centr_labirinta', arrive: hhmmToMinutes('18:00'), depart: null }
+      ]},
+      { line: 'blue', days: [1, 3, 5], stops: [
+        { station: 'centr_labirinta', arrive: null, depart: hhmmToMinutes('03:30') },
+        { station: 'derevnya', arrive: hhmmToMinutes('12:30'), depart: hhmmToMinutes('13:30') },
+        { station: 'predpustynye_more', arrive: hhmmToMinutes('15:30'), depart: null }
+      ]}
+    ];
+
+    const allTrips = [...purpleTrips, ...orangeTrips, ...greenTrips, ...blueTrips];
+
+    function getMoscowNow() {
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        weekday: 'short',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).formatToParts(now);
+      const map = {};
+      parts.forEach(p => { map[p.type] = p.value; });
+      const wdMap = { 'пн': 0, 'вт': 1, 'ср': 2, 'чт': 3, 'пт': 4, 'сб': 5, 'вс': 6 };
+      const shiftedDay = wdMap[map.weekday] ?? 0;
+      const h = parseInt(map.hour, 10);
+      const m = parseInt(map.minute, 10);
+      const s = parseInt(map.second, 10);
+      const minutesFromMidnight = h * 60 + m + s / 60;
+      const absoluteMinutes = shiftedDay * 1440 + minutesFromMidnight;
+      return { shiftedDay, minutesFromMidnight, absoluteMinutes, rawDate: now };
+    }
+
+    function tripWorksOnDay(trip, shiftedDay) {
+      if (!trip.days) return true;
+      return trip.days.includes(shiftedDay);
+    }
+
+    function findTrip(lineName, startStation, endStation, afterAbsoluteMinutes) {
+      let best = null;
+
+      for (const trip of allTrips) {
+        if (trip.line !== lineName) continue;
+
+        const startIdx = trip.stops.findIndex(s => s.station === startStation);
+        const endIdx = trip.stops.findIndex(s => s.station === endStation);
+        if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) continue;
+
+        const startStop = trip.stops[startIdx];
+        const endStop = trip.stops[endIdx];
+        if (startStop.depart == null || endStop.arrive == null) continue;
+
+        let travelTime = 0;
+        for (let i = startIdx; i < endIdx; i++) {
+          const cur = trip.stops[i];
+          const nxt = trip.stops[i + 1];
+          let delta;
+          if (cur.depart == null) {
+            delta = 0;
+          } else {
+            delta = nxt.arrive - cur.depart;
+          }
+          if (delta < 0) delta += 1440;
+          travelTime += delta;
+          if (i + 1 < endIdx && nxt.depart != null) {
+            let wait = nxt.depart - nxt.arrive;
+            if (wait < 0) wait += 1440;
+            travelTime += wait;
+          }
+        }
+
+        const startDepartMin = startStop.depart;
+        const shiftedDay = Math.floor(afterAbsoluteMinutes / 1440);
+
+        for (let dayOffset = 0; dayOffset <= 30; dayOffset++) {
+          const candShifted = shiftedDay + dayOffset;
+          const candDayShifted = ((candShifted % 7) + 7) % 7;
+          if (!tripWorksOnDay(trip, candDayShifted)) continue;
+
+          const candDepartAbs = candShifted * 1440 + startDepartMin;
+          if (candDepartAbs < afterAbsoluteMinutes - 0.001) continue;
+
+          const candArriveAbs = candDepartAbs + travelTime;
+
+          if (!best || candDepartAbs < best.boardingTime) {
+            best = {
+              boardingTime: candDepartAbs,
+              arrivalTime: candArriveAbs,
+              trip
+            };
+          }
+          break;
+        }
+      }
+
+      return best;
+    }
+
+    function findAllPaths(startId, endId) {
+      const paths = [];
+      const visited = new Set();
+
+      function getConnectingLines(a, b) {
+        const result = [];
+        for (const lineName in lines) {
+          const seq = lines[lineName];
+          for (let j = 0; j < seq.length - 1; j++) {
+            if ((seq[j] === a && seq[j+1] === b) || (seq[j] === b && seq[j+1] === a)) {
+              result.push(lineName);
+              break;
+            }
+          }
+        }
+        return result;
+      }
+
+      function dfs(current, path) {
+        if (current === endId) {
+          paths.push([...path]);
+          return;
+        }
+        visited.add(current);
+        for (const nb of graph[current]) {
+          if (visited.has(nb)) continue;
+
+          const connecting = getConnectingLines(current, nb);
+
+          for (const lineName of connecting) {
+            path.push({ from: current, to: nb, line: lineName });
+            dfs(nb, path);
+            path.pop();
+          }
+        }
+        visited.delete(current);
+      }
+
+      dfs(startId, []);
+      return paths;
+    }
+
+    function simulateTrip(steps, nowAbs) {
+      if (!steps || steps.length === 0) return null;
+
+      let currentAbs = nowAbs;
+      const segments = [];
+
+      for (const step of steps) {
+        const tripInfo = findTrip(step.line, step.from, step.to, currentAbs);
+        if (!tripInfo) return null;
+
+        segments.push({
+          line: step.line,
+          from: step.from,
+          to: step.to,
+          boardingTime: tripInfo.boardingTime,
+          arrivalTime: tripInfo.arrivalTime
+        });
+
+        currentAbs = tripInfo.arrivalTime;
+      }
+
+      const stationPath = [steps[0].from];
+      for (const step of steps) stationPath.push(step.to);
+
+      return {
+        path: stationPath,
+        steps: steps,
+        departAbs: segments[0].boardingTime,
+        arriveAbs: segments[segments.length - 1].arrivalTime,
+        segments
+      };
+    }
+
+    function findBestRoute(startId, endId, nowAbs) {
+      const allPaths = findAllPaths(startId, endId);
+
+      if (allPaths.length === 0) {
+        return { noPath: true };
+      }
+
+      let best = null;
+      let bestTransfers = Infinity;
+
+      for (const steps of allPaths) {
+        const result = simulateTrip(steps, nowAbs);
+        if (!result) continue;
+
+        let transfers = 0;
+        for (let i = 0; i < result.segments.length - 1; i++) {
+          if (result.segments[i].line !== result.segments[i + 1].line) {
+            transfers++;
+          }
+        }
+
+        if (transfers < bestTransfers ||
+            (transfers === bestTransfers && (!best || result.arriveAbs < best.arriveAbs))) {
+          best = result;
+          bestTransfers = transfers;
+        }
+      }
+
+      if (!best) {
+        return { noConnection: true };
+      }
+
+      return best;
+    }
+
+    function formatAbsTimeWithDay(absMinutes, todayShiftedDay) {
+      const shifted = Math.floor(absMinutes / 1440);
+      const minutesInDay = ((absMinutes % 1440) + 1440) % 1440;
+      const h = Math.floor(minutesInDay / 60);
+      const m = Math.round(minutesInDay % 60);
+      const timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+      const absShifted = ((shifted % 7) + 7) % 7;
+      const isToday = absShifted === todayShiftedDay;
+
+      return {
+        time: timeStr,
+        dayShort: DAY_NAMES_SHORT[absShifted],
+        dayFull: DAY_NAMES_FULL[absShifted],
+        isToday
+      };
+    }
+
+    function formatDuration(mins) {
+      mins = Math.max(0, Math.round(mins));
+      if (mins < 1) return 'меньше минуты';
+      if (mins < 60) return mins + ' мин';
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      if (m === 0) return h + ' ч';
+      return h + ' ч ' + m + ' мин';
+    }
+
+    const viewport = document.getElementById('viewport');
+    const mapContent = document.getElementById('mapContent');
+    let scale = 1, translateX = 0, translateY = 0;
+
+    function initTransform() {
+      const vw = viewport.clientWidth, vh = viewport.clientHeight;
+      if (vw < 700) {
+        scale = 0.4; translateX = 10; translateY = 60;
+      } else {
+        scale = 0.7;
+        translateX = (vw - 1500 * scale) / 2 + 120;
+        translateY = (vh - 950 * scale) / 2;
+      }
+      updateTransform();
+    }
+    function updateTransform() {
+      mapContent.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
+
+    let isDragging = false, startX, startY, startTranslateX, startTranslateY;
+    function onPointerDown(e) {
+      if (e.target.closest('.station')) return;
+      isDragging = true;
+      const cx = e.clientX ?? e.touches?.[0]?.clientX;
+      const cy = e.clientY ?? e.touches?.[0]?.clientY;
+      if (cx === undefined) return;
+      startX = cx; startY = cy;
+      startTranslateX = translateX; startTranslateY = translateY;
+      viewport.style.cursor = 'grabbing';
+      e.preventDefault();
+    }
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      const cx = e.clientX ?? e.touches?.[0]?.clientX;
+      const cy = e.clientY ?? e.touches?.[0]?.clientY;
+      if (cx === undefined) return;
+      translateX = startTranslateX + (cx - startX);
+      translateY = startTranslateY + (cy - startY);
+      updateTransform();
+      e.preventDefault();
+    }
+    function onPointerUp() { isDragging = false; viewport.style.cursor = 'grab'; }
+
+    viewport.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+    viewport.addEventListener('touchstart', onPointerDown, { passive: false });
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+    window.addEventListener('touchcancel', onPointerUp);
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      const zoomFactor = delta > 0 ? 1.1 : 0.9;
+      const newScale = Math.min(3, Math.max(0.2, scale * zoomFactor));
+      const rect = viewport.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const sr = newScale / scale;
+      translateX = mx - (mx - translateX) * sr;
+      translateY = my - (my - translateY) * sr;
+      scale = newScale;
+      updateTransform();
+    }, { passive: false });
+
+    document.getElementById('zoomIn').addEventListener('click', () => {
+      const ns = Math.min(3, scale * 1.2);
+      const vw = viewport.clientWidth, vh = viewport.clientHeight;
+      const sr = ns / scale;
+      translateX = vw/2 - (vw/2 - translateX) * sr;
+      translateY = vh/2 - (vh/2 - translateY) * sr;
+      scale = ns; updateTransform();
+    });
+    document.getElementById('zoomOut').addEventListener('click', () => {
+      const ns = Math.max(0.2, scale / 1.2);
+      const vw = viewport.clientWidth, vh = viewport.clientHeight;
+      const sr = ns / scale;
+      translateX = vw/2 - (vw/2 - translateX) * sr;
+      translateY = vh/2 - (vh/2 - translateY) * sr;
+      scale = ns; updateTransform();
+    });
+
+    initTransform();
+
+    const fromBtn = document.getElementById('fromBtn');
+    const toBtn = document.getElementById('toBtn');
+    const fromLabel = document.getElementById('fromLabel');
+    const toLabel = document.getElementById('toLabel');
+    const fromMarker = document.getElementById('fromMarker');
+    const toMarker = document.getElementById('toMarker');
+    const fromClear = document.getElementById('fromClear');
+    const toClear = document.getElementById('toClear');
+    const fromDropdown = document.getElementById('fromDropdown');
+    const toDropdown = document.getElementById('toDropdown');
+    const swapBtn = document.getElementById('swapBtn');
+    const routeSummary = document.getElementById('routeSummary');
+    const hint = document.getElementById('hint');
+
+    const routeTiming = document.getElementById('routeTiming');
+    const departureTimeEl = document.getElementById('departureTime');
+    const arrivalTimeEl = document.getElementById('arrivalTime');
+    const waitDurationEl = document.getElementById('waitDuration');
+    const routeDurationEl = document.getElementById('routeDuration');
+    const timingNoteEl = document.getElementById('timingNote');
+
+    const routeDetailsToggle = document.getElementById('routeDetailsToggle');
+    const routeDetailsBox = document.getElementById('routeDetails');
+    const routeDetailsBody = document.getElementById('routeDetailsBody');
+
+    const sortedStations = [...stationsData].sort((a, b) =>
+      a.name.localeCompare(b.name, 'ru')
+    );
+
+    setTimeout(() => { hint.style.opacity = '0'; }, 4000);
+
+    let startId = null;
+    let endId = null;
+
+    const svgEl = document.getElementById('metroSvg');
+    const bubbleLayer = document.getElementById('bubbleLayer');
+
+    function createBubble(x, y, label, offsetY) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'route-bubble visible');
+
+      const textWidth = label.length * 9 + 20;
+      const bubbleW = Math.max(64, textWidth);
+      const bubbleH = 26;
+      const bubbleX = x - bubbleW / 2;
+      const bubbleY = y + offsetY;
+
+      const tipHeight = 8;
+      const tipWidth = 12;
+      const tipX = x;
+      const tipTopY = y + offsetY - tipHeight;
+
+      const tip = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      tip.setAttribute('points',
+        `${tipX - tipWidth/2},${bubbleY + 1} ` +
+        `${tipX + tipWidth/2},${bubbleY + 1} ` +
+        `${tipX},${tipTopY}`
+      );
+      tip.setAttribute('class', 'bubble-body');
+      g.appendChild(tip);
+
+      const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      body.setAttribute('x', bubbleX);
+      body.setAttribute('y', bubbleY);
+      body.setAttribute('width', bubbleW);
+      body.setAttribute('height', bubbleH);
+      body.setAttribute('rx', 8);
+      body.setAttribute('ry', 8);
+      body.setAttribute('class', 'bubble-body');
+      g.appendChild(body);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', x);
+      text.setAttribute('y', bubbleY + bubbleH / 2 + 1);
+      text.setAttribute('class', 'bubble-text');
+      text.textContent = label;
+      g.appendChild(text);
+
+      return g;
+    }
+
+    function clearRouteHighlight() {
+      svgEl.classList.remove('route-active');
+      document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+      bubbleLayer.innerHTML = '';
+    }
+
+    function applyRouteHighlight(pathOrSteps) {
+      clearRouteHighlight();
+      // ИСПРАВЛЕНИЕ: проверяем на пустоту, а не на длину < 2.
+      // Это позволяет корректно обрабатывать маршруты из одного сегмента
+      // (например, «Город → Горы»).
+      if (!pathOrSteps || pathOrSteps.length === 0) return;
+
+      let stationPath = [];
+      let steps = null;
+
+      if (typeof pathOrSteps[0] === 'string') {
+        stationPath = [...pathOrSteps];
+      } else {
+        steps = pathOrSteps;
+        stationPath = [steps[0].from];
+        for (const step of steps) stationPath.push(step.to);
+      }
+
+      // Если после разбора станций меньше двух — нечего подсвечивать
+      if (stationPath.length < 2) return;
+
+      svgEl.classList.add('route-active');
+
+      stationPath.forEach(id => {
+        const el = document.querySelector(`.station[data-id="${id}"]`);
+        if (el) el.classList.add('active');
+      });
+
+      for (let i = 0; i < stationPath.length - 1; i++) {
+        const a = stationPath[i], b = stationPath[i + 1];
+        let seg = null;
+        if (steps) {
+          const step = steps[i];
+          if (step) {
+            seg = document.querySelector(
+              `.line-segment[data-from="${step.from}"][data-to="${step.to}"][data-line="${step.line}"], ` +
+              `.line-segment[data-from="${step.to}"][data-to="${step.from}"][data-line="${step.line}"]`
+            );
+          }
+        }
+        if (!seg) {
+          seg = document.querySelector(
+            `.line-segment[data-from="${a}"][data-to="${b}"], .line-segment[data-from="${b}"][data-to="${a}"]`
+          );
+        }
+        if (seg) seg.classList.add('active');
+      }
+
+      const transferMap = { 'predpustynye_more': 'transfer-more', 'derevnya': 'transfer-derevnya' };
+      stationPath.forEach((id, idx) => {
+        const st = stationsData.find(s => s.id === id);
+        if (!st || st.lines.length < 2) return;
+        const prevId = idx > 0 ? stationPath[idx - 1] : null;
+        const nextId = idx < stationPath.length - 1 ? stationPath[idx + 1] : null;
+        const prev = prevId ? stationsData.find(s => s.id === prevId) : null;
+        const next = nextId ? stationsData.find(s => s.id === nextId) : null;
+        const prevLine = prev ? prev.lines.find(l => st.lines.includes(l)) : null;
+        const nextLine = next ? next.lines.find(l => st.lines.includes(l)) : null;
+        if (prevLine && nextLine && prevLine !== nextLine) {
+          const trId = transferMap[id];
+          if (trId) {
+            const tr = document.getElementById(trId);
+            if (tr) tr.classList.add('active');
+          }
+        }
+      });
+
+      const startSt = stationsData.find(s => s.id === stationPath[0]);
+      const endSt = stationsData.find(s => s.id === stationPath[stationPath.length - 1]);
+      if (startSt) {
+        const offset = (startSt.lines.length > 1) ? 28 : 26;
+        bubbleLayer.appendChild(createBubble(startSt.x, startSt.y, 'Отсюда', offset));
+      }
+      if (endSt) {
+        const offset = (endSt.lines.length > 1) ? 28 : 26;
+        bubbleLayer.appendChild(createBubble(endSt.x, endSt.y, 'Сюда', offset));
+      }
+    }
+
+    function updateFieldUI(which) {
+      const isFrom = which === 'from';
+      const id = isFrom ? startId : endId;
+      const label = isFrom ? fromLabel : toLabel;
+      const marker = isFrom ? fromMarker : toMarker;
+      const clearBtn = isFrom ? fromClear : toClear;
+
+      if (id) {
+        const st = stationsData.find(s => s.id === id);
+        label.textContent = st.name;
+        label.classList.remove('placeholder');
+        marker.classList.remove('empty');
+        marker.style.background = LINE_COLORS[st.lines[0]];
+        clearBtn.classList.add('visible');
+      } else {
+        label.textContent = isFrom ? 'Откуда' : 'Куда';
+        label.classList.add('placeholder');
+        marker.classList.add('empty');
+        marker.style.background = '';
+        clearBtn.classList.remove('visible');
+      }
+    }
+
+    function buildDropdown(dropdown, excludeId, currentId) {
+      dropdown.innerHTML = '';
+      sortedStations.forEach(st => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.dataset.id = st.id;
+        if (st.id === excludeId) item.classList.add('disabled');
+        if (st.id === currentId) item.classList.add('selected');
+
+        const linesWrap = document.createElement('span');
+        linesWrap.className = 'item-lines';
+        st.lines.forEach(l => {
+          const dot = document.createElement('span');
+          dot.className = 'line-dot';
+          dot.style.background = LINE_COLORS[l];
+          linesWrap.appendChild(dot);
+        });
+        item.appendChild(linesWrap);
+
+        const name = document.createElement('span');
+        name.className = 'item-name';
+        name.textContent = st.name;
+        item.appendChild(name);
+
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (item.classList.contains('disabled')) return;
+
+          if (dropdown === fromDropdown) {
+            startId = st.id;
+          } else {
+            endId = st.id;
+          }
+          closeAllDropdowns();
+          updateRoute();
+        });
+
+        dropdown.appendChild(item);
+      });
+    }
+
+    function closeAllDropdowns() {
+      fromDropdown.classList.remove('open');
+      toDropdown.classList.remove('open');
+      fromBtn.classList.remove('open');
+      toBtn.classList.remove('open');
+    }
+
+    fromBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = fromDropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!isOpen) {
+        buildDropdown(fromDropdown, endId, startId);
+        fromDropdown.classList.add('open');
+        fromBtn.classList.add('open');
+      }
+    });
+
+    toBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = toDropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!isOpen) {
+        buildDropdown(toDropdown, startId, endId);
+        toDropdown.classList.add('open');
+        toBtn.classList.add('open');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.route-field')) {
+        closeAllDropdowns();
+      }
+    });
+
+    if (routeDetailsToggle) {
+      routeDetailsToggle.addEventListener('click', () => {
+        routeDetailsBox.classList.toggle('open');
+      });
+    }
+
+    function renderRouteDetails(best, todayShifted) {
+      routeDetailsBody.innerHTML = '';
+
+      if (!best || !best.segments || best.segments.length === 0) {
+        routeDetailsBox.classList.remove('open');
+        return;
+      }
+
+      const groups = [];
+      for (const seg of best.segments) {
+        if (groups.length === 0) {
+          groups.push({
+            line: seg.line,
+            from: seg.from,
+            to: seg.to,
+            boardingTime: seg.boardingTime,
+            arrivalTime: seg.arrivalTime
+          });
+        } else {
+          const last = groups[groups.length - 1];
+          if (seg.line === last.line) {
+            last.to = seg.to;
+            last.arrivalTime = seg.arrivalTime;
+          } else {
+            groups.push({
+              line: seg.line,
+              from: seg.from,
+              to: seg.to,
+              boardingTime: seg.boardingTime,
+              arrivalTime: seg.arrivalTime
+            });
+          }
+        }
+      }
+
+      const stops = [];
+
+      const firstGroup = groups[0];
+      stops.push({
+        kind: 'start',
+        stationId: firstGroup.from,
+        line: firstGroup.line,
+        time: firstGroup.boardingTime,
+        timeLabel: 'Отправление'
+      });
+
+      for (let i = 1; i < groups.length; i++) {
+        const g = groups[i];
+        const prevGroup = groups[i - 1];
+        stops.push({
+          kind: 'transfer',
+          stationId: g.from,
+          prevLine: prevGroup.line,
+          nextLine: g.line,
+          time: g.boardingTime,
+          timeLabel: 'Отправление'
+        });
+      }
+
+      const lastGroup = groups[groups.length - 1];
+      stops.push({
+        kind: 'end',
+        stationId: lastGroup.to,
+        line: lastGroup.line,
+        time: lastGroup.arrivalTime,
+        timeLabel: 'Прибытие'
+      });
+
+      stops.forEach((stop) => {
+        const station = stationsData.find(s => s.id === stop.stationId);
+        const el = document.createElement('div');
+        el.className = 'detail-stop';
+        if (stop.kind === 'start') el.classList.add('kind-start');
+        if (stop.kind === 'end') el.classList.add('kind-end');
+        if (stop.kind === 'transfer') el.classList.add('kind-transfer');
+
+        if (stop.kind === 'start') {
+          el.classList.add('seg-' + stop.line);
+        } else if (stop.kind === 'transfer') {
+          el.classList.add('seg-' + stop.nextLine);
+        }
+
+        const dot = document.createElement('div');
+        dot.className = 'detail-dot';
+
+        if (stop.kind === 'transfer') {
+          dot.style.setProperty('--top-color', LINE_COLORS[stop.prevLine]);
+          dot.style.setProperty('--bottom-color', LINE_COLORS[stop.nextLine]);
+        } else if (stop.kind === 'start') {
+          dot.style.setProperty('--dot-color', LINE_COLORS[stop.line]);
+        } else if (stop.kind === 'end') {
+          dot.style.setProperty('--dot-color', LINE_COLORS[stop.line]);
+        }
+
+        el.appendChild(dot);
+
+        const content = document.createElement('div');
+        content.className = 'detail-content';
+
+        const name = document.createElement('div');
+        name.className = 'detail-station-name';
+        name.textContent = station ? station.name : stop.stationId;
+        content.appendChild(name);
+
+        const action = document.createElement('div');
+        action.className = 'detail-action';
+
+        if (stop.kind === 'start') {
+          action.innerHTML = 'Садимся на ' +
+            `<span class="line-dot-inline" style="background:${LINE_COLORS[stop.line]}"></span>` +
+            LINE_NAMES[stop.line].accusative + ' ветку';
+        } else if (stop.kind === 'end') {
+          action.textContent = 'Выходим';
+        } else if (stop.kind === 'transfer') {
+          action.innerHTML = 'Пересадка с ' +
+            `<span class="line-dot-inline" style="background:${LINE_COLORS[stop.prevLine]}"></span>` +
+            LINE_NAMES[stop.prevLine].genitive +
+            ' на ' +
+            `<span class="line-dot-inline" style="background:${LINE_COLORS[stop.nextLine]}"></span>` +
+            LINE_NAMES[stop.nextLine].accusative;
+        }
+        content.appendChild(action);
+
+        const timeEl = document.createElement('div');
+        timeEl.className = 'detail-time';
+        const formatted = formatAbsTimeWithDay(stop.time, todayShifted);
+        const badge = formatted.isToday
+          ? ''
+          : `<span class="day-badge">${formatted.dayShort}</span>`;
+        timeEl.innerHTML = `${badge}${stop.timeLabel}: ${formatted.time}`;
+        content.appendChild(timeEl);
+
+        el.appendChild(content);
+        routeDetailsBody.appendChild(el);
+      });
+    }
+
+    function updateRouteTiming() {
+      if (!startId || !endId) {
+        routeTiming.classList.remove('visible');
+        return;
+      }
+
+      const nowInfo = getMoscowNow();
+      const nowAbs = nowInfo.absoluteMinutes;
+      const todayShifted = nowInfo.shiftedDay;
+
+      const best = findBestRoute(startId, endId, nowAbs);
+
+      routeTiming.classList.add('visible');
+
+      if (!best || best.noPath || best.noConnection) {
+        departureTimeEl.textContent = '—';
+        arrivalTimeEl.textContent = '—';
+        waitDurationEl.innerHTML = '<span class="duration-label">До отправления</span>—';
+        routeDurationEl.innerHTML = '<span class="duration-label">В пути</span>—';
+
+        if (best && best.noPath) {
+          timingNoteEl.textContent = 'Между этими станциями нет физического пути в схеме.';
+        } else if (best && best.noConnection) {
+          timingNoteEl.textContent = 'Нет стыковки рейсов в ближайшие 30 дней.';
+        } else {
+          timingNoteEl.textContent = 'Не удалось построить маршрут по этому направлению.';
+        }
+        timingNoteEl.className = 'timing-note warn';
+
+        routeDetailsBox.classList.remove('open');
+        routeDetailsBody.innerHTML = '';
+        return;
+      }
+
+      const dep = formatAbsTimeWithDay(best.departAbs, todayShifted);
+      const arr = formatAbsTimeWithDay(best.arriveAbs, todayShifted);
+      const duration = best.arriveAbs - best.departAbs;
+      const wait = Math.max(0, best.departAbs - nowAbs);
+
+      if (dep.isToday) {
+        departureTimeEl.innerHTML = `${dep.time}`;
+      } else {
+        departureTimeEl.innerHTML = `<span class="day-badge">${dep.dayShort}</span>${dep.time}`;
+      }
+
+      if (arr.isToday) {
+        arrivalTimeEl.innerHTML = `${arr.time}`;
+      } else {
+        arrivalTimeEl.innerHTML = `<span class="day-badge">${arr.dayShort}</span>${arr.time}`;
+      }
+
+      waitDurationEl.innerHTML = `<span class="duration-label">До отправления</span>${formatDuration(wait)}`;
+      routeDurationEl.innerHTML = `<span class="duration-label">В пути</span>${formatDuration(duration)}`;
+
+      let numTransfers = 0;
+      for (let i = 0; i < best.segments.length - 1; i++) {
+        if (best.segments[i].line !== best.segments[i + 1].line) {
+          numTransfers++;
+        }
+      }
+
+      const noteParts = [];
+      if (numTransfers > 0) noteParts.push(`Пересадок: ${numTransfers}`);
+      else noteParts.push('Без пересадок');
+
+      if (!dep.isToday) {
+        noteParts.push(`Отправление в ${dep.dayFull.toLowerCase()}`);
+      }
+      if (!arr.isToday && arr.dayShort !== dep.dayShort) {
+        noteParts.push(`Прибытие в ${arr.dayFull.toLowerCase()}`);
+      }
+
+      timingNoteEl.textContent = noteParts.join(' • ');
+      timingNoteEl.className = 'timing-note';
+
+      renderRouteDetails(best, todayShifted);
+    }
+
+    function updateRoute() {
+      updateFieldUI('from');
+      updateFieldUI('to');
+
+      if (startId && endId) {
+        const a = stationsData.find(s => s.id === startId);
+        const b = stationsData.find(s => s.id === endId);
+        routeSummary.textContent = `${a.name} → ${b.name}`;
+      } else if (startId) {
+        routeSummary.textContent = 'Выберите станцию назначения';
+      } else if (endId) {
+        routeSummary.textContent = 'Выберите станцию отправления';
+      } else {
+        routeSummary.textContent = 'Выберите станции';
+      }
+
+      if (startId && endId) {
+        updateRouteTiming();
+
+        const nowInfo = getMoscowNow();
+        const best = findBestRoute(startId, endId, nowInfo.absoluteMinutes);
+
+        if (best && best.steps) {
+          applyRouteHighlight(best.steps);
+        } else {
+          clearRouteHighlight();
+        }
+      } else {
+        clearRouteHighlight();
+        routeTiming.classList.remove('visible');
+        routeDetailsBox.classList.remove('open');
+        routeDetailsBody.innerHTML = '';
+      }
+
+      document.querySelectorAll('.station').forEach(el => el.classList.remove('selected'));
+      if (startId && !endId) {
+        const el = document.querySelector(`.station[data-id="${startId}"]`);
+        if (el) el.classList.add('selected');
+      } else if (endId && !startId) {
+        const el = document.querySelector(`.station[data-id="${endId}"]`);
+        if (el) el.classList.add('selected');
+      }
+    }
+
+    function onStationClick(e) {
+      const id = e.currentTarget.dataset.id;
+
+      if (startId && endId) {
+        startId = id;
+        endId = null;
+      } else if (!startId) {
+        startId = id;
+      } else if (!endId) {
+        if (startId === id) return;
+        endId = id;
+      } else {
+        startId = id; endId = null;
+      }
+      updateRoute();
+    }
+
+    document.querySelectorAll('.station').forEach(el => {
+      el.addEventListener('click', onStationClick);
+      el.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+      el.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onStationClick(e);
+      });
+    });
+
+    fromClear.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startId = null;
+      closeAllDropdowns();
+      updateRoute();
+    });
+
+    toClear.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      endId = null;
+      closeAllDropdowns();
+      updateRoute();
+    });
+
+    swapBtn.addEventListener('click', () => {
+      const tmp = startId;
+      startId = endId;
+      endId = tmp;
+      closeAllDropdowns();
+      updateRoute();
+    });
+
+    updateRoute();
+
+    const moscowDateEl = document.getElementById('moscowDate');
+    const moscowClockEl = document.getElementById('moscowClock');
+
+    let timeOffsetMs = 0;
+    let timeSynced = false;
+
+    async function syncMoscowTime() {
+      try {
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Moscow');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        const serverUnixTime = data.unixtime * 1000;
+        const localNow = Date.now();
+        timeOffsetMs = serverUnixTime - localNow;
+        timeSynced = true;
+        updateMoscowClock();
+      } catch (err) {
+        console.warn('Не удалось получить точное время:', err);
+        timeOffsetMs = 0;
+        timeSynced = true;
+        updateMoscowClock();
+      }
+    }
+
+    function getMoscowNowRaw() {
+      if (!timeSynced) return new Date();
+      return new Date(Date.now() + timeOffsetMs);
+    }
+
+    function updateMoscowClock() {
+      const now = getMoscowNowRaw();
+      const dateStr = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        day: 'numeric', month: 'long', year: 'numeric'
+      }).format(now);
+      const weekdayStr = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow', weekday: 'long'
+      }).format(now);
+      const timeStr = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).format(now);
+
+      moscowDateEl.textContent = `${weekdayStr}, ${dateStr}`;
+      moscowClockEl.textContent = timeStr;
+    }
+
+    moscowDateEl.textContent = 'Загрузка...';
+    moscowClockEl.textContent = '--:--:--';
+    syncMoscowTime();
+    setInterval(updateMoscowClock, 1000);
+    setInterval(syncMoscowTime, 10 * 60 * 1000);
+
+    setInterval(() => {
+      if (startId && endId) updateRouteTiming();
+    }, 30000);
+
+    window.metroApp = {
+      stationsData, graph, lines, allTrips,
+      findAllPaths, simulateTrip, findBestRoute,
+      applyRouteHighlight, clearRouteHighlight, updateRoute,
+      getSelected: () => ({ startId, endId }),
+      setRoute: (a, b) => { startId = a; endId = b; updateRoute(); }
+    };
+
+  })();
+</script>
+</body>
+</html>
