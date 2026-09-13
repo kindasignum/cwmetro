@@ -1,0 +1,121 @@
+/* =========================================================
+   БАЗОВЫЕ СТИЛИ, ТЕМА, СБРОСЫ
+   ========================================================= */
+
+:root {
+  --bg-app: #ffffff; --bg-map: #fafafc; --bg-panel: #ffffff;
+  --bg-field: #f7f7fa; --bg-field-hover: #f0f0f5;
+  --bg-dropdown: #ffffff; --bg-dropdown-hover: #f0f0f5; --bg-dropdown-selected: rgba(0, 119, 255, 0.08);
+  --bg-swap: #f0f0f5; --bg-swap-hover: #e5e5ec;
+  --bg-zoom: #ffffff; --bg-zoom-hover: #f5f5f5;
+  --bg-legend: rgba(255, 255, 255, 0.94);
+  --bg-bubble-body: #1f1f1f; --bg-station-label-stroke: #fafafc;
+  --bg-timing-blue: rgba(0, 119, 255, 0.08); --bg-timing-orange: rgba(230, 126, 34, 0.1);
+  --bg-badge-blue: rgba(0, 119, 255, 0.1); --bg-badge-gray: rgba(128,128,128,0.15);
+  --bg-detail-stop-line: #e5e5e5;
+  --border-app: #e5e5e5; --border-panel: #ececf1; --border-field-open: #0077ff;
+  --text-primary: #1f1f1f; --text-secondary: #5a5a5e; --text-tertiary: #8a8a8e;
+  --text-blue: #0077ff; --text-blue-hover: #0056b3; --text-warn: #c0392b; --text-bubble: #ffffff;
+  --text-swap: #0077ff;
+  --territory-color: #b0b0b6; --arrow-color: #b0b0b6;
+  --shadow-panel: 0 8px 28px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-dropdown: 0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-zoom: 0 2px 10px rgba(0, 0, 0, 0.1); --shadow-legend: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-bubble: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+body.dark {
+  --bg-app: #1a1a1f; --bg-map: #15151a; --bg-panel: #242428;
+  --bg-field: #2e2e33; --bg-field-hover: #37373d;
+  --bg-dropdown: #2a2a2f; --bg-dropdown-hover: #37373d; --bg-dropdown-selected: rgba(0, 140, 255, 0.18);
+  --bg-swap: #2e2e33; --bg-swap-hover: #3a3a40;
+  --bg-zoom: #242428; --bg-zoom-hover: #2e2e33;
+  --bg-legend: rgba(36, 36, 40, 0.94);
+  --bg-bubble-body: #f0f0f5; --bg-station-label-stroke: #15151a;
+  --bg-timing-blue: rgba(0, 140, 255, 0.18); --bg-timing-orange: rgba(230, 126, 34, 0.22);
+  --bg-badge-blue: rgba(0, 140, 255, 0.2); --bg-badge-gray: rgba(128,128,128,0.25);
+  --bg-detail-stop-line: #3a3a40;
+  --border-app: #2e2e33; --border-panel: #333338; --border-field-open: #3b9eff;
+  --text-primary: #f0f0f5; --text-secondary: #b0b0b5; --text-tertiary: #8a8a8e;
+  --text-blue: #3b9eff; --text-blue-hover: #6bb6ff; --text-warn: #ff6b5a; --text-bubble: #1f1f1f;
+  --text-swap: #3b9eff;
+  --territory-color: #55555c; --arrow-color: #55555c;
+  --shadow-panel: 0 8px 28px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-dropdown: 0 12px 32px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.3);
+  --shadow-zoom: 0 2px 10px rgba(0,0,0,0.4); --shadow-legend: 0 2px 12px rgba(0,0,0,0.4);
+  --shadow-bubble: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  background: #f2f2f7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+  touch-action: none;
+}
+body.dark { background: #0e0e12; }
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+  position: relative;
+  overflow: hidden;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border-app);
+  z-index: 10;
+  flex-shrink: 0;
+  min-height: 56px;
+}
+
+.app-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  margin-right: auto;
+}
+
+.theme-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-swap);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.theme-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.theme-btn .icon-sun { display: none; }
+.theme-btn .icon-moon { display: block; }
+body.dark .theme-btn .icon-sun { display: block; }
+body.dark .theme-btn .icon-moon { display: none; }

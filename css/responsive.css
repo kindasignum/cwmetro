@@ -1,0 +1,78 @@
+/* =========================================================
+   АДАПТАЦИЯ ПОД ПК И МОБИЛЬНЫЕ
+   ========================================================= */
+
+/* ПК */
+@media (min-width: 701px) {
+  .route-panel {
+    top: 76px;
+    left: 16px;
+    width: 300px;
+    max-height: calc(100vh - 92px);
+    max-height: calc(100dvh - 92px);
+  }
+  .panel-handle { display: none; }
+}
+
+/* Мобильные */
+@media (max-width: 700px) {
+  .route-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+    padding: 0 14px calc(14px + env(safe-area-inset-bottom, 0px));
+    transition: max-height 0.3s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: auto;
+    max-height: 60dvh;
+  }
+  .route-panel.mob-collapsed { max-height: 92px; overflow: hidden; }
+  .route-panel.mob-medium { max-height: 60dvh; }
+  .route-panel.mob-expanded { max-height: 92dvh; }
+
+  .panel-handle {
+    display: block;
+    position: sticky;
+    top: 0;
+    background: var(--bg-panel);
+    padding: 12px 0 10px;
+    margin: 0 -14px;
+    text-align: center;
+    cursor: grab;
+    z-index: 5;
+    touch-action: none;
+    border-radius: 20px 20px 0 0;
+  }
+  .panel-handle-bar {
+    display: inline-block;
+    width: 48px;
+    height: 5px;
+    border-radius: 3px;
+    background: #c8c8ce;
+  }
+  body.dark .panel-handle-bar { background: #5a5a60; }
+
+  .legend {
+    bottom: auto;
+    top: 76px;
+    right: 12px;
+    font-size: 11px;
+    padding: 10px 12px;
+    opacity: 0.9;
+  }
+  .legend-dot { width: 12px; height: 12px; }
+
+  .zoom-controls {
+    bottom: auto;
+    top: 76px;
+    left: 12px;
+  }
+  .zoom-btn { width: 40px; height: 40px; font-size: 22px; }
+
+  .route-field-btn { font-size: 14px; padding: 11px 36px 11px 12px; }
+  .hint { font-size: 12px; }
+}

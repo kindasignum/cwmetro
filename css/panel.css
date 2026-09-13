@@ -1,0 +1,417 @@
+/* =========================================================
+   ПАНЕЛЬ МАРШРУТА, ПОЛЯ, DROPDOWN, ТАЙМИНГ, ДЕТАЛИ, ЛЕГЕНДА, ЗУМ
+   ========================================================= */
+
+.route-panel {
+  position: absolute;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-panel);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--shadow-panel);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.route-field { position: relative; }
+
+.route-field-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  padding: 10px 38px 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  position: relative;
+}
+.route-field-btn:hover { background: var(--bg-field-hover); }
+.route-field-btn.open { border-color: var(--border-field-open); background: var(--bg-panel); }
+
+.field-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid var(--bg-panel);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+}
+.field-marker.empty { background: #d8d8dd !important; }
+body.dark .field-marker.empty { background: #4a4a50 !important; }
+.field-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.field-label.placeholder { color: var(--text-tertiary); font-weight: 400; }
+
+.clear-field-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(128,128,128,0.15);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.clear-field-btn.visible { display: flex; }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-dropdown);
+  border-radius: 14px;
+  box-shadow: var(--shadow-dropdown);
+  border: 1px solid var(--border-panel);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 6px;
+  display: none;
+}
+.dropdown.open { display: block; }
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.dropdown-item:hover { background: var(--bg-dropdown-hover); }
+.dropdown-item.selected { background: var(--bg-dropdown-selected); color: var(--text-blue); }
+.dropdown-item .item-lines { display: flex; gap: 3px; flex-shrink: 0; }
+.dropdown-item .line-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-dropdown);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+}
+.dropdown-item .item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdown-item.disabled { opacity: 0.4; cursor: not-allowed; }
+
+.swap-btn {
+  align-self: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-swap);
+  color: var(--text-swap);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+.swap-btn:hover { background: var(--bg-swap-hover); }
+
+.route-summary {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-panel);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ================= ПЛАНИРОВАНИЕ ================= */
+.planner {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.planner-toggle {
+  display: flex;
+  background: var(--bg-field);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.planner-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.planner-tab:hover { color: var(--text-primary); }
+.planner-tab.active {
+  background: var(--bg-panel);
+  color: var(--text-blue);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.planner-inputs {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.planner-inputs.visible { display: grid; }
+
+.planner-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.planner-field label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.planner-field input {
+  background: var(--bg-field);
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  transition: background 0.15s, border-color 0.15s;
+  color-scheme: light;
+}
+body.dark .planner-field input { color-scheme: dark; }
+.planner-field input:focus {
+  outline: none;
+  border-color: var(--border-field-open);
+  background: var(--bg-panel);
+}
+
+/* ================= ТАЙМИНГ МАРШРУТА ================= */
+.author-line {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-panel);
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.author-line a { color: var(--text-blue); text-decoration: none; font-weight: 600; }
+
+.route-timing {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-panel);
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+.route-timing.visible { display: flex; }
+
+.timing-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.timing-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.timing-value { font-size: 16px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; }
+.timing-value .day-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-blue);
+  background: var(--bg-badge-blue);
+  border-radius: 6px;
+  padding: 1px 5px;
+  margin-right: 5px;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
+
+.timing-durations { display: flex; gap: 6px; margin-top: 2px; }
+.timing-duration {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-blue);
+  text-align: center;
+  padding: 7px 6px;
+  background: var(--bg-timing-blue);
+  border-radius: 10px;
+  line-height: 1.2;
+}
+.timing-duration .duration-label { display: block; font-size: 9px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 2px; }
+.timing-duration.wait { background: var(--bg-timing-orange); color: #d35400; }
+body.dark .timing-duration.wait { color: #ff9f5a; }
+.timing-note { font-size: 11px; color: var(--text-tertiary); text-align: center; line-height: 1.4; }
+.timing-note.warn { color: var(--text-warn); }
+
+/* ================= ДЕТАЛИ МАРШРУТА ================= */
+.route-details { margin-top: 6px; border-top: 1px solid var(--border-panel); padding-top: 8px; }
+.route-details-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-blue);
+  cursor: pointer;
+  font-family: inherit;
+}
+.route-details-toggle .details-arrow { font-size: 10px; color: var(--text-tertiary); }
+.route-details.open .route-details-toggle .details-arrow { transform: rotate(180deg); display: inline-block; }
+.route-details-body { display: none; flex-direction: column; padding: 8px 0 2px 0; }
+.route-details.open .route-details-body { display: flex; }
+
+.detail-stop { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; position: relative; }
+.detail-stop:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 28px;
+  bottom: -8px;
+  width: 3px;
+  background: var(--bg-detail-stop-line);
+  border-radius: 2px;
+}
+.detail-stop.seg-purple:not(:last-child)::before { background: #8e44ad; }
+.detail-stop.seg-orange:not(:last-child)::before { background: #e67e22; }
+.detail-stop.seg-green:not(:last-child)::before  { background: #27ae60; }
+.detail-stop.seg-blue:not(:last-child)::before   { background: #2980b9; }
+.detail-stop.seg-pink:not(:last-child)::before   { background: #e91e8c; }
+.detail-stop.seg-yellow:not(:last-child)::before { background: #d4a800; }
+
+.detail-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--bg-panel);
+  border: 4px solid var(--text-tertiary);
+  box-sizing: border-box;
+  z-index: 1;
+}
+.detail-stop.kind-start .detail-dot { border-color: var(--dot-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot-color) 20%, transparent); }
+.detail-stop.kind-end .detail-dot { border-color: var(--dot-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dot-color) 20%, transparent); }
+.detail-stop.kind-transfer .detail-dot {
+  border: none;
+  background: linear-gradient(to bottom, var(--top-color) 0%, var(--top-color) 50%, var(--bottom-color) 50%, var(--bottom-color) 100%);
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 3px rgba(128,128,128,0.15);
+}
+
+.detail-content { flex: 1; min-width: 0; padding-top: 1px; }
+.detail-station-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; line-height: 1.2; }
+.detail-action { font-size: 11px; color: var(--text-secondary); font-weight: 500; line-height: 1.3; margin-bottom: 2px; }
+.detail-action .line-dot-inline { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: middle; margin: 0 2px 1px 2px; }
+
+.detail-timings { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; }
+.detail-timing-row { display: flex; align-items: baseline; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.detail-timing-row .tt-label { font-size: 10px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; min-width: 84px; }
+.detail-timing-row .tt-value { font-size: 12px; font-weight: 700; color: var(--text-blue); white-space: nowrap; }
+.detail-timing-row .tt-value .day-badge { display: inline-block; font-size: 9px; font-weight: 700; color: var(--text-blue); background: var(--bg-badge-blue); border-radius: 4px; padding: 0 3px; margin-right: 3px; text-transform: uppercase; }
+.detail-timing-row .tt-value .arrived-badge { display: inline-block; font-size: 9px; font-weight: 700; color: var(--text-secondary); background: var(--bg-badge-gray); border-radius: 4px; padding: 0 4px; margin-left: 4px; text-transform: uppercase; }
+.detail-stay { font-size: 10px; color: var(--text-tertiary); font-weight: 600; margin-top: 1px; }
+.detail-stay.wait { color: #d35400; }
+body.dark .detail-stay.wait { color: #ff9f5a; }
+
+/* ================= ЛЕГЕНДА ================= */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: var(--bg-legend);
+  backdrop-filter: blur(8px);
+  padding: 12px 16px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-legend);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  z-index: 20;
+  pointer-events: none;
+  border: 1px solid rgba(128,128,128,0.1);
+}
+.legend-item { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--text-primary); }
+.legend-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px var(--bg-legend); }
+.legend-item.temporary .legend-dot {
+  background: repeating-linear-gradient(45deg, currentColor, currentColor 3px, #ffffff 3px, #ffffff 5px);
+}
+.legend-item.temporary[data-color="pink"] .legend-dot { color: #e91e8c; }
+.legend-item.temporary[data-color="yellow"] .legend-dot { color: #d4a800; }
+
+/* ================= ЗУМ ================= */
+.zoom-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 20;
+}
+.zoom-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-zoom);
+  border: none;
+  box-shadow: var(--shadow-zoom);
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.zoom-btn:hover { background: var(--bg-zoom-hover); }
+
+/* ================= ПОДСКАЗКА ================= */
+.hint {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  z-index: 30;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  transition: opacity 0.4s;
+  white-space: nowrap;
+}
