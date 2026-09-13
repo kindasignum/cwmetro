@@ -30,15 +30,54 @@
     if (M.liveTrains && M.liveTrains.refresh) M.liveTrains.refresh();
   };
 
+  // Скрывает подсказку сверху
+  let hintEl = null;
+  let hintTimer = null;
+  function hideHint() {
+    if (hintEl && hintEl.style.opacity !== '0') {
+      hintEl.style.opacity = '0';
+    }
+    if (hintTimer) {
+      clearTimeout(hintTimer);
+      hintTimer = null;
+    }
+  }
+  function scheduleHintHide() {
+    if (!hintEl) return;
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(hideHint, 4000);
+  }
+
   function init() {
+    // Подсказка сверху
+    hintEl = document.getElementById('hint');
+    if (hintEl) {
+      scheduleHintHide();
+      // При первом взаимодействии пользователя — скрываем сразу
+      document.addEventListener('click', hideHint, { once: true });
+      document.addEventListener('touchstart', hideHint, { once: true });
+    }
+
+    // Тема
     M.theme.init();
+
+    // Панель и выпадашки
     M.routePanel.init();
+
+    // Планировщик
     M.planner.init();
+
+    // Модуль тайминга + деталей
     M.routeDetails.init();
+
+    // Карта
     M.panZoom.init();
     M.routeHighlight.init();
+
+    // Мобильная панель
     M.mobilePanel.init();
 
+    // Клики по станциям
     document.querySelectorAll('.station').forEach(el => {
       el.addEventListener('click', (e) => {
         M.routePanel.handleStationClick(e.currentTarget.dataset.id);
@@ -51,8 +90,10 @@
       });
     });
 
+    // Поезда в реальном времени
     M.liveTrains.init();
 
+    // Периодическая перепроверка (для актуализации "До отправления" в режиме "сейчас")
     setInterval(() => {
       const startId = M.routePanel.getStart();
       const endId = M.routePanel.getEnd();
