@@ -4,7 +4,8 @@
 
 (function (M) {
 
-  // Проверяет, работает ли рейс в заданный абсолютный день
+  // Проверяет, работает ли рейс в заданный абсолютный день.
+  // Используется только для рейсов с days (регулярные дни недели).
   M.tripWorksOnDay = function (trip, candAbsDayIndex) {
     if (trip.absDays) return trip.absDays.includes(candAbsDayIndex);
     if (trip.days) {
@@ -14,34 +15,41 @@
     return true;
   };
 
+  // Проверяет, является ли рейс "длинным" (несколько дней одной базой).
+  // Признак: absDays содержит ровно одну дату, и последняя остановка имеет
+  // время больше суток (переход через полночь несколько раз).
+  function isLongTrip(trip) {
+    if (!trip.absDays || trip.absDays.length !== 1) return false;
+    // Длинный рейс — если есть остановки с временем > 1440
+    return trip.stops.some(s =>
+      (s.arrive != null && s.arrive > 1440) ||
+      (s.depart != null && s.depart > 1440)
+    );
+  }
+
   // Ищет последнее прибытие поезда указанной линии на станцию,
   // которое произошло НЕ ПОЗЖЕ beforeAbsTime.
-  // Учитываем только те прибытия, при которых поезд действительно стоял
-  // на станции (arrive < depart), либо станция является конечной (depart == null).
   M.findArrivalBeforeStation = function (stationId, lineName, beforeAbsTime) {
     const aroundDay = Math.floor(beforeAbsTime / 1440);
     let best = null;
 
     for (const trip of M.allTrips) {
       if (trip.line !== lineName) continue;
-      const idx = trip.stops.findIndex(s => s.station === stationId);
-      if (idx === -1) continue;
-      const stop = trip.stops[idx];
-      if (stop.arrive == null) continue;
 
-      // Пропускаем случаи "formation" (arrive == depart на первой станции)
-      if (stop.depart != null && stop.arrive === stop.depart) continue;
+      // Собираем все индексы станции в stops
+      const indices = [];
+      for (let i = 0; i < trip.stops.length; i++) {
+        if (trip.stops[i].station === stationId) indices.push(i);
+      }
+      if (indices.length === 0) continue;
 
-      // Для рейсов с absDays — работаем от базового дня
-      if (trip.absDays && trip.absDays.length > 0) {
-        // Перебираем все индексы станции в длинном рейсе
-        for (let i = 0; i < trip.stops.length; i++) {
-          const s = trip.stops[i];
-          if (s.station !== stationId) continue;
+      if (isLongTrip(trip)) {
+        // Длинный рейс (жёлтая): одна базовая дата, все времена от неё
+        const baseDayStart = trip.absDays[0] * 1440;
+        for (const idx of indices) {
+          const s = trip.stops[idx];
           if (s.arrive == null) continue;
           if (s.depart != null && s.arrive === s.depart) continue;
-
-          const baseDayStart = trip.absDays[0] * 1440;
           const candAbs = baseDayStart + s.arrive;
           if (candAbs > beforeAbsTime) continue;
           if (!best || candAbs > best) best = candAbs;
@@ -49,13 +57,33 @@
         continue;
       }
 
-      // Обычный режим
-      for (let off = -10; off <= 0; off++) {
-        const candDay = aroundDay + off;
-        if (!M.tripWorksOnDay(trip, candDay)) continue;
-        const candAbs = candDay * 1440 + stop.arrive;
-        if (candAbs > beforeAbsTime) continue;
-        if (!best || candAbs > best) best = candAbs;
+      if (trip.absDays && trip.absDays.length > 0) {
+        // Рейс с конкретными датами (розовая): перебираем все даты в absDays
+        for (const dayIdx of trip.absDays) {
+          for (const idx of indices) {
+            const s = trip.stops[idx];
+            if (s.arrive == null) continue;
+            if (s.depart != null && s.arrive === s.depart) continue;
+            const candAbs = dayIdx * 1440 + s.arrive;
+            if (candAbs > beforeAbsTime) continue;
+            if (!best || candAbs > best) best = candAbs;
+          }
+        }
+        continue;
+      }
+
+      // Обычный режим (по дням недели)
+      for (const idx of indices) {
+        const s = trip.stops[idx];
+        if (s.arrive == null) continue;
+        if (s.depart != null && s.arrive === s.depart) continue;
+        for (let off = -10; off <= 0; off++) {
+          const candDay = aroundDay + off;
+          if (!M.tripWorksOnDay(trip, candDay)) continue;
+          const candAbs = candDay * 1440 + s.arrive;
+          if (candAbs > beforeAbsTime) continue;
+          if (!best || candAbs > best) best = candAbs;
+        }
       }
     }
 
@@ -79,7 +107,6 @@
       }
       if (startIndices.length === 0 || endIndices.length === 0) continue;
 
-      // Перебираем все пары
       for (const startIdx of startIndices) {
         for (const endIdx of endIndices) {
           if (endIdx <= startIdx) continue;
@@ -103,27 +130,33 @@
             }
           }
 
-          // Для рейсов с absDays — база фиксирована
-          if (trip.absDays && trip.absDays.length > 0) {
+          // Разбираем режим рейса
+          if (isLongTrip(trip)) {
+            // Длинный рейс — одна база
             const baseDayStart = trip.absDays[0] * 1440;
             const candDepartAbs = baseDayStart + startStop.depart;
             const candArriveAbs = candDepartAbs + travelTime;
-
             if (candDepartAbs < afterAbsoluteMinutes - 0.001) continue;
-
             if (!best || candDepartAbs < best.boardingTime) {
-              best = {
-                boardingTime: candDepartAbs,
-                arrivalTime: candArriveAbs,
-                trip,
-                startIdx,
-                endIdx
-              };
+              best = { boardingTime: candDepartAbs, arrivalTime: candArriveAbs, trip, startIdx, endIdx };
             }
             continue;
           }
 
-          // Обычный режим
+          if (trip.absDays && trip.absDays.length > 0) {
+            // Рейс с конкретными датами (розовая) — перебираем все absDays
+            for (const dayIdx of trip.absDays) {
+              const candDepartAbs = dayIdx * 1440 + startStop.depart;
+              if (candDepartAbs < afterAbsoluteMinutes - 0.001) continue;
+              const candArriveAbs = candDepartAbs + travelTime;
+              if (!best || candDepartAbs < best.boardingTime) {
+                best = { boardingTime: candDepartAbs, arrivalTime: candArriveAbs, trip, startIdx, endIdx };
+              }
+            }
+            continue;
+          }
+
+          // Обычный режим (по дням недели)
           const startDepartMin = startStop.depart;
           const currentAbsDayIndex = Math.floor(afterAbsoluteMinutes / 1440);
 
@@ -137,13 +170,7 @@
             const candArriveAbs = candDepartAbs + travelTime;
 
             if (!best || candDepartAbs < best.boardingTime) {
-              best = {
-                boardingTime: candDepartAbs,
-                arrivalTime: candArriveAbs,
-                trip,
-                startIdx,
-                endIdx
-              };
+              best = { boardingTime: candDepartAbs, arrivalTime: candArriveAbs, trip, startIdx, endIdx };
             }
             break;
           }
